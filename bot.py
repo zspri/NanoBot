@@ -721,6 +721,33 @@ class General:
         embed.set_thumbnail(url="https://maxcdn.icons8.com/iOS7/PNG/75/Logos/github_copyrighted_filled-75.png")
         await self.bot.send_message(ctx.message.channel, embed=embed)
 
+    @commands.command(pass_context=True, aliases=['dstats', 'discordstats', 'dstatus'])
+    async def discordstatus(self, ctx): # !!discordstatus
+        """Shows Discord status (From https://status.discordapp.com)"""
+        await self.bot.send_typing(ctx.message.channel)
+        st = urllib.request.urlopen('https://srhpyqt94yxb.statuspage.io/api/v2/status.json')
+        st = str(st.read())
+        st = st[2:]
+        st = st[:len(st) - 1]
+        st = ast.literal_eval(st)
+        status = st['status']['indicator']
+        desc = st['status']['description']
+        timestamp = st['page']['updated_at']
+        color = discord.Color.default()
+        if status == "none":
+            color = discord.Color.green()
+        elif status == "minor":
+            color = discord.Color.gold()
+        elif status == "major":
+            color = discord.Color.red()
+        embed = discord.Embed(color=color)
+        embed.title="Discord Status"
+        embed.set_footer(text="Last updated " + timestamp)
+        embed.add_field(name="Status", value=status)
+        embed.add_field(name="Description", value=desc)
+        embed.set_thumbnail(url="https://discordapp.com/assets/2c21aeda16de354ba5334551a883b481.png")
+        await self.bot.send_message(ctx.message.channel, embed=embed)
+
     @commands.command(pass_context=True, no_pm=True, aliases=['botinfo'])
     async def info(self, ctx): # !!info
         """Shows bot info."""
