@@ -25,6 +25,8 @@ import urllib.request
 import ast
 import timeit
 import argparse
+import wmi
+import psutil
 # import atexit
 
 colorama.init(autoreset=True)
@@ -45,6 +47,11 @@ def queue_get_all(q):
         except:
             break
     return items
+
+def memory():
+    w = wmi.WMI('.')
+    result = w.query("SELECT WorkingSet FROM Win32_PerfRawData_PerfProc_Process WHERE IDProcess=%d" % os.getpid())
+    return int(result[0].WorkingSet)
 
 cmds_this_session = []
 admin_ids = ["233325229395410964", "236251438685093889", "294210459144290305", "233366211159785473"]
@@ -575,7 +582,7 @@ class Admin:
     async def shutdown(self, ctx): # !!shutdown
         if str(ctx.message.author.id) in admin_ids:
             await self.bot.say(":wave: Shutting down...")
-            await self.bot.change_presence(status=discord.Status.idle)
+            await self.bot.change_presence(status=discord.Status.offline)
             sys.exit(0)
             exit()
 
@@ -763,22 +770,23 @@ class General:
         global start_time
         global version
         global errors
+        sysmem = psutil.virtual_memory()
         elapsed_time = time.gmtime(time.time() - start_time)
         stp = str(elapsed_time[7] - 1) + " days, " + str(elapsed_time[3]) + " hours, " + str(elapsed_time[4]) + " minutes"
+        mem = str(memory() / 1000000) + " / " + str(sysmem.total / 1000000) + " MB"
         await self.bot.send_typing(ctx.message.channel)
         embed = discord.Embed(color=ctx.message.server.me.color)
         embed.title = "NanoBot Status"
         embed.set_footer(text="NanoBot#2520")
         embed.set_thumbnail(url=ctx.message.server.me.avatar_url)
-        embed.add_field(name="Owner", value="Der ✓#4587")
-        embed.add_field(name="Version", value=version)
-        embed.add_field(name="Session UUID", value="```\n" + str(_uuid) + "\n```")
+        embed.add_field(name="Version", value="discord.py " + str(discord.__version__) + "\nNanoBot " + str(version))
         embed.add_field(name="Commands Processed", value=str(len(cmds_this_session)))
         embed.add_field(name="Songs Played", value=str(len(songs_played)))
         embed.add_field(name="Uptime", value=stp)
         embed.add_field(name="Errors", value=str(errors) + " (" + str(round(errors/len(cmds_this_session) * 100)) + "%)")
         embed.add_field(name="Servers", value=str(len(self.bot.servers)))
         embed.add_field(name="Users", value=str(sum(1 for _ in self.bot.get_all_members())))
+        embed.add_field(name="Used Memory", value=mem)
         embed.add_field(name="Voice Sessions", value=str(len(self.bot.voice_clients)))
         await self.bot.send_message(ctx.message.channel, embed=embed)
 
