@@ -423,17 +423,17 @@ class Moderation:
             counter = 0
             await self.bot.say('Deleting messages... :clock2:')
             try:
-                async for log in self.bot.logs_from(message.channel, limit=messages):
+                async for log in self.bot.logs_from(ctx.message.channel, limit=messages):
                     await self.bot.delete_message(log)
                     counter += 1
             except Exception as e:
                 errors += 1
                 print(color.RED + "ERROR: " + str(e))
-                await bot.send_message(message.channel, exc_msg.format(e))
+                await self.bot.send_message(ctx.message.channel, exc_msg.format(e))
             else:
-                await bot.send_message(message.channel, 'Deleted {} messages.'.format(counter))
+                await self.bot.send_message(ctx.message.channel, 'Deleted {} messages.'.format(counter))
         else:
-            await bot.send_message(message.channel, ':warning: No permission! You must be the server owner.')
+            await self.bot.send_message(ctx.message.channel, ':warning: No permission! You must be the server owner.')
 
 class Admin:
 
