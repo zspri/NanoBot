@@ -572,6 +572,14 @@ class Admin:
             f.close()
 
     @commands.command(pass_context=True, hidden=True)
+    async def shutdown(self, ctx): # !!shutdown
+        if str(ctx.message.author.id) in admin_ids:
+            await self.bot.say(":wave: Shutting down...")
+            await self.bot.change_presence(status=discord.Status.idle)
+            sys.exit(0)
+            exit()
+
+    @commands.command(pass_context=True, hidden=True)
     async def restart(self, ctx): # !!restart
         if str(ctx.message.author.id) in admin_ids:
             await self.bot.say(":wave: Restarting...")
@@ -813,7 +821,7 @@ class General:
             await self.bot.send_typing(ctx.message.channel)
             start = time.time()
             res = os.system("ping gateway.discord.gg -n " + str(times))
-            _time = round(((time.time() - start) * 1000) / (times * 2))
+            _time = round(((time.time() - start) * 1000) / (times * 3))
             embed = discord.Embed()
             if res == 0 or res is None:
                 if _time <= 125:
