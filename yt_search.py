@@ -33,11 +33,4 @@ def youtube_search(q, max_results=10):
         if search_result["id"]["kind"] == "youtube#video":
             videos.append({"id":search_result["id"]["videoId"], "title":search_result["snippet"]["title"], "description":search_result['snippet']['description'], "uploader":search_result['snippet']['channelTitle'], "thumbnail":search_result['snippet']['thumbnails']['default']['url']})
 
-    print(videos[0])
-
-try:
-    youtube_search(q=input("query: "))
-    input()
-except HttpError as e:
-    print("An HTTP error %d occurred:\n%s" % (e.resp.status, e.content))
-    input()
+    return videos
