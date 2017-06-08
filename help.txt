@@ -1,0 +1,30 @@
+```markdown
+< NanoBot Help >
+# Commands
+[1]: General
+!!help - Shows this message
+!!hello - Hello, world!
+!!info - Shows basic NanoBot info
+!!user - Shows info about the requested user
+!!guild - Shows guild info
+!!ping - Pong!
+!!dog - http://random.dog
+!!cat - http://random.cat
+!!ghstatus - GitHub status
+[2]: Moderation
+!!prune <messages> - Bulk-deletes up to 100 messages
+!!prune2 <messages> - Individually deletes up to 100 messages
+[3]: Music
+!!join <channel> - Joins the specified channel
+!!summon - Joins your voice channel
+!!play <query> - Plays a song
+!!yt <query> - Searches YouTube for the requested query
+!!queue - Shows songs in queue
+!!volume <amt> - Changes player volume
+!!pause - Pauses the current song
+!!resume - Resumes playing the current song
+!!stop - Leave the current voice channel
+!!skip - Skips the current song
+!!playing - Shows the current song
+```
+Join the server for help and info: https://discord.gg/eDRnXd6
