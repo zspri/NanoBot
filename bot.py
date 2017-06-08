@@ -576,6 +576,7 @@ class Admin:
         if str(ctx.message.author.id) in admin_ids:
             await self.bot.say(":wave: Restarting...")
             await self.bot.change_presence(status=discord.Status.idle)
+            os.system('start restart.bat')
             sys.exit(0)
             exit()
 
