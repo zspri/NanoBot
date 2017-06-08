@@ -670,9 +670,9 @@ class General:
         stp2 = ""
         for role in user.roles:
             if role.name == user.roles[len(user.roles) - 1].name:
-               stp2 = stp2 + role.mention
+               stp2 = stp2 + role.name
             else:
-                stp2 = stp2 + role.mention + ", "
+                stp2 = stp2 + role.name + ", "
         embed = discord.Embed(color=user.color)
         embed.title=user.name + "'s Info"
         embed.set_footer(text=user.name + "#" + user.discriminator)
@@ -799,9 +799,9 @@ class General:
         stp2 = ""
         for role in server.roles:
             if role.name == server.roles[len(server.roles) - 1].name:
-               stp2 = stp2 + role.mention
+               stp2 = stp2 + role.name
             else:
-                stp2 = stp2 + role.mention + ", "
+                stp2 = stp2 + role.name + ", "
         embed = discord.Embed(color=discord.Color.default())
         embed.title = "Guild Info"
         embed.set_footer(text="NanoBot#2520")
