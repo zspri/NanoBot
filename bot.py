@@ -457,7 +457,7 @@ class Admin:
             err = 0
             embed = discord.Embed()
             try:
-                if "exit" in _eval.lower():
+                if "exit" in _eval.lower() or "token" in _eval.lower():
                     err = 1
                     res = "PermissionError: Request denied."
                 else:
@@ -829,26 +829,37 @@ class General:
         else:
             await self.bot.send_typing(ctx.message.channel)
             start = time.time()
-            res = os.system("ping gateway.discord.gg -n " + str(times))
+            res = 0
+            for x in range(0, times):
+                try:
+                    res = urllib.request.urlopen('https://srhpyqt94yxb.statuspage.io/api/v2/summary.json', timeout=10)
+                    pg = res.read()
+                except Exception as e:
+                    res.close()
+                    res = e
+                    break
+                else:
+                    res.close()
+                    res = 0
             _time = round(((time.time() - start) * 1000) / times)
             embed = discord.Embed()
-            if res == 0 or res is None:
-                if _time <= 125:
+            if res == 0:
+                if _time <= 500:
                     embed = discord.Embed(color=discord.Color.green())
-                elif _time <= 250:
+                elif _time <= 1000:
                     embed = discord.Embed(color=discord.Color.gold())
                 else:
                     embed = discord.Embed(color=discord.Color.red())
                     errors += 1
                 embed.title = "NanoBot Status"
-                embed.add_field(name=":outbox_tray: Output", value="Connection took " + str(_time) + "ms")
-                embed.set_footer(text="gateway.discord.gg")
+                embed.add_field(name=":outbox_tray: Pong!", value="Connection took " + str(_time) + "ms")
+                embed.set_footer(text="status.discordapp.com")
             else:
                 embed = discord.Embed(color=discord.Color.red())
                 embed.title = "NanoBot Status"
                 embed.add_field(name=":outbox_tray: Error", value="Ping returned error code `" + str(res) + "` in " + str(_time) + "ms")
                 errors += 1
-                embed.set_footer(text="gateway.discord.gg")
+                embed.set_footer(text="status.discordapp.com")
             await self.bot.send_message(ctx.message.channel, embed=embed)
 
     @commands.command()
