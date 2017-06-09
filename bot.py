@@ -35,6 +35,7 @@ class color:
     YELLOW = colorama.Fore.WHITE + colorama.Back.YELLOW
     RED = colorama.Fore.WHITE + colorama.Back.RED
     GREEN = colorama.Fore.WHITE + colorama.Back.GREEN
+    RESET = colorama.Style.RESET_ALL
 
 def queue_get_all(q):
     items = []
@@ -148,7 +149,7 @@ class VoiceState:
                 await self.play_next_song.wait()
             except Exception as e:
                 self.bot.say(exc_msg.format(e))
-                print(color.RED + "ERROR: " + str(e))
+                print(color.RED + "ERROR: " + str(e) + color.RESET)
 
 class Music:
 
@@ -200,7 +201,7 @@ class Music:
             await bot.edit_message(tmp, ':no_entry_sign: Not a valid voice channel!')
             errors += 1
         except Exception as e:
-            print(color.RED + "ERROR: " + str(e))
+            print(color.RED + "ERROR: " + str(e) + color.RESET)
             await bot.edit_message(tmp, ':no_entry_sign: Couldn\'t connect to voice channel.')
             errors += 1
             try:
@@ -258,11 +259,11 @@ class Music:
         try:
             player = await state.voice.create_ytdl_player(song, ytdl_options=opts, after=state.toggle_next, before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5")
         except OSError as e:
-            print(color.RED + "ERROR: " + e)
+            print(color.RED + "ERROR: " + e + color.RESET)
             await bot.edit_message(tmp, ":gun: A fatal error occurred: `{0}: {1}` Please report this at https://discord.gg/eDRnXd6.".format(str(type(e).__name__), str(e)[:1900]))
         except Exception as e:
             e = str(e)
-            print(color.RED + "ERROR: " + e)
+            print(color.RED + "ERROR: " + e + color.RESET)
             errors += 1
             fmt = ':warning: An error occurred: ```py\n' + e[:1900] + '\n```'
             if e.startswith("ERROR: Unsupported URL") or e.startswith("hostname"):
@@ -277,7 +278,7 @@ class Music:
             try:
                 entry = VoiceEntry(ctx.message, player)
             except Exception as e:
-                print(color.RED + "ERROR: " + str(e))
+                print(color.RED + "ERROR: " + str(e) + color.RESET)
                 errors += 1
                 await bot.edit_message(tmp, ':gun: A fatal error occurred: `{}`'.format(str(e)[:1900]))
             else:
@@ -410,7 +411,7 @@ class Moderation:
                     await self.bot.delete_messages(msgs)
                 except Exception as e:
                     errors += 1
-                    print(color.RED + "ERROR: " + str(e))
+                    print(color.RED + "ERROR: " + str(e) + color.RESET)
                     await self.bot.say(exc_msg.format(str(e)))
                     try:
                         await bot.send_message(discord.User(id="236251438685093889"), ":warning: An error occurred in `" + str(event) + "`: ```" + traceback.format_exc()[:1800] + "```")
@@ -435,7 +436,7 @@ class Moderation:
                     counter += 1
             except Exception as e:
                 errors += 1
-                print(color.RED + "ERROR: " + str(e))
+                print(color.RED + "ERROR: " + str(e) + color.RESET)
                 await self.bot.send_message(ctx.message.channel, exc_msg.format(e))
             else:
                 await self.bot.send_message(ctx.message.channel, 'Deleted {} messages.'.format(counter))
@@ -864,12 +865,12 @@ bot.add_cog(YouTube(bot))
 
 @bot.event
 async def on_server_join(server): # When the bot joins a server
-    logging.warn(color.GREEN + "Joined server " + str(server.id)+ " (" + str(server.name) + ")")
+    logging.warn(color.GREEN + "Joined server " + str(server.id)+ " (" + str(server.name) + ")" + color.RESET)
     await bot.send_message(server.default_channel, ':wave: Hi, I\'m NanoBot! Thanks for adding me to your server. Type `!!help` for help and tips on what I can do.')
 
 @bot.event
 async def on_server_leave(server): # When the bot leaves a server
-    logging.warn(color.RED + "Left server " + str(server.id) + " (" + str(server.name) + ")")
+    logging.warn(color.RED + "Left server " + str(server.id) + " (" + str(server.name) + ")" + color.RESET)
 
 @bot.event
 async def on_member_join(member): # When a member joins a server
@@ -906,7 +907,7 @@ async def on_command_error(error, ctx): # When a command error occurrs
     else:
         if ctx.command:
             errors += 1
-            logging.warn(color.YELLOW + "Command error: " + str(error))
+            logging.warn(color.YELLOW + "Command error: " + str(error) + color.RESET)
             await bot.send_message(ctx.message.channel, ":warning: An error occured while processing this command: `{}`".format(error))
 
 @bot.event
@@ -925,9 +926,9 @@ async def on_message(message): # When a message is sent
 @bot.event
 async def on_ready():
     global start_time
-    print(color.BLUE + 'Logged in as')
-    print(color.BLUE + bot.user.name)
-    print(color.BLUE + bot.user.id)
+    print(color.BLUE + 'Logged in as' + color.RESET)
+    print(color.BLUE + bot.user.name + "#" + str(bot.user.discriminator) + color.RESET)
+    print(color.BLUE + bot.user.id + color.RESET)
     print('------')
     await bot.change_presence(game=discord.Game(name='Type !!help'))
     start_time = time.time()
