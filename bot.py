@@ -829,7 +829,7 @@ class General:
             await self.bot.send_typing(ctx.message.channel)
             start = time.time()
             res = os.system("ping gateway.discord.gg -n " + str(times))
-            _time = round(((time.time() - start) * 1000) / (times * 3))
+            _time = round(((time.time() - start) * 1000) / times)
             embed = discord.Embed()
             if res == 0 or res is None:
                 if _time <= 125:
