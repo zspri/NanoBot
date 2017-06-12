@@ -785,7 +785,7 @@ class General:
         users = sum(1 for _ in self.bot.get_all_members())
         logging.debug("Got all bot users")
         s = len(self.bot.servers) - len(st_servers)
-        if not str(s[0]) == "-"
+        if not str(s[0]) == "-":
             s = " (+" + s + ")"
         embed = discord.Embed(color=ctx.message.server.me.color)
         embed.title = "NanoBot Status"
@@ -880,7 +880,7 @@ class General:
     @commands.command()
     async def hello(self): # !!hello
         """Hello, world!"""
-        await bot.send_message(message.channel, ':wave: Hi, I\'m NanoBot! I can make your Discord server better with all of my features! Type `!!help` for more info, or go to http://bot.nanomotion.xyz')
+        await self.bot.say(':wave: Hi, I\'m NanoBot! I can make your Discord server better with all of my features! Type `!!help` for more info, or go to http://bot.nanomotion.xyz')
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or('!!'), description='A music, fun, and moderation bot for Discord.')
 bot.add_cog(Music(bot))
