@@ -771,6 +771,7 @@ class General:
         global start_time
         global version
         global errors
+        await self.bot.send_typing(ctx.message.channel)
         sysmem = psutil.virtual_memory()
         elapsed_time = time.gmtime(time.time() - start_time)
         stp = str(elapsed_time[7] - 1) + " days, " + str(elapsed_time[3]) + " hours, " + str(elapsed_time[4]) + " minutes"
@@ -827,40 +828,43 @@ class General:
         except:
             await self.bot.say(":warning: Times is an optional argument that must be an `int`.")
         else:
-            await self.bot.send_typing(ctx.message.channel)
-            start = time.time()
-            res = 0
-            for x in range(0, times):
-                try:
-                    res = urllib.request.urlopen('https://srhpyqt94yxb.statuspage.io/api/v2/summary.json', timeout=10)
-                    pg = res.read()
-                except Exception as e:
-                    res.close()
-                    res = e
-                    break
-                else:
-                    res.close()
-                    res = 0
-            _time = round(((time.time() - start) * 1000) / times)
-            embed = discord.Embed()
-            if res == 0:
-                if _time <= 500:
-                    embed = discord.Embed(color=discord.Color.green())
-                elif _time <= 1000:
-                    embed = discord.Embed(color=discord.Color.gold())
+            if times > 1 and not str(ctx.message.author.id) in admin_ids:
+                await self.bot.say(":warning: You need to be **NanoBot Owner** to ping multiple times.")
+            else:
+                await self.bot.send_typing(ctx.message.channel)
+                start = time.time()
+                res = 0
+                for x in range(0, times):
+                    try:
+                        res = urllib.request.urlopen('https://srhpyqt94yxb.statuspage.io/api/v2/summary.json', timeout=10)
+                        pg = res.read()
+                    except Exception as e:
+                        res.close()
+                        res = e
+                        break
+                    else:
+                        res.close()
+                        res = 0
+                _time = round(((time.time() - start) * 1000) / times)
+                embed = discord.Embed()
+                if res == 0:
+                    if _time <= 500:
+                        embed = discord.Embed(color=discord.Color.green())
+                    elif _time <= 1000:
+                        embed = discord.Embed(color=discord.Color.gold())
+                    else:
+                        embed = discord.Embed(color=discord.Color.red())
+                        errors += 1
+                    embed.title = "NanoBot Status"
+                    embed.add_field(name=":outbox_tray: Pong!", value="Connection took " + str(_time) + "ms")
+                    embed.set_footer(text="status.discordapp.com")
                 else:
                     embed = discord.Embed(color=discord.Color.red())
+                    embed.title = "NanoBot Status"
+                    embed.add_field(name=":outbox_tray: Error", value="Ping returned error code `" + str(res) + "` in " + str(_time) + "ms")
                     errors += 1
-                embed.title = "NanoBot Status"
-                embed.add_field(name=":outbox_tray: Pong!", value="Connection took " + str(_time) + "ms")
-                embed.set_footer(text="status.discordapp.com")
-            else:
-                embed = discord.Embed(color=discord.Color.red())
-                embed.title = "NanoBot Status"
-                embed.add_field(name=":outbox_tray: Error", value="Ping returned error code `" + str(res) + "` in " + str(_time) + "ms")
-                errors += 1
-                embed.set_footer(text="status.discordapp.com")
-            await self.bot.send_message(ctx.message.channel, embed=embed)
+                    embed.set_footer(text="status.discordapp.com")
+                await self.bot.send_message(ctx.message.channel, embed=embed)
 
     @commands.command()
     async def hello(self): # !!hello
