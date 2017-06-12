@@ -67,6 +67,7 @@ exc_msg = ":warning: An error occurred:\n```py\n{}\n```\nNeed help? Join the Nan
 DEVELOPER_KEY = str(os.getenv('GAPI_TOKEN'))
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
+proc_info = os.getenv('PROCESSOR_IDENTIFIER')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -773,6 +774,7 @@ class General:
         global version
         global errors
         global st_servers
+        global proc_info
         await self.bot.send_typing(ctx.message.channel)
         sysmem = psutil.virtual_memory()
         logging.debug("Got VM state")
@@ -784,22 +786,23 @@ class General:
         logging.debug("Formatted VM")
         users = sum(1 for _ in self.bot.get_all_members())
         logging.debug("Got all bot users")
-        s = len(self.bot.servers) - len(st_servers)
-        if not str(s[0]) == "-":
+        s = str(len(self.bot.servers) - len(st_servers))
+        if not s[0] == "-":
             s = " (+" + s + ")"
         embed = discord.Embed(color=ctx.message.server.me.color)
         embed.title = "NanoBot Status"
         embed.set_footer(text="NanoBot#2520")
         embed.set_thumbnail(url=ctx.message.server.me.avatar_url)
-        embed.add_field(name="Version", value="discord.py " + str(discord.__version__) + "\nNanoBot " + str(version))
+        embed.add_field(name="Version", value="discord.py v" + str(discord.__version__) + "\nNanoBot v" + str(version))
         embed.add_field(name="Commands Processed", value=str(len(cmds_this_session)))
         embed.add_field(name="Songs Played", value=str(len(songs_played)))
         embed.add_field(name="Uptime", value=stp)
         embed.add_field(name="Errors", value=str(errors) + " (" + str(round(errors/len(cmds_this_session) * 100)) + "%)")
-        embed.add_field(name="Servers", value=str(len(self.bot.servers)))
+        embed.add_field(name="Servers", value=str(len(self.bot.servers)) + s)
         embed.add_field(name="Users", value=str(users))
         embed.add_field(name="Used Memory", value=mem)
-        embed.add_field(name="Voice Sessions", value=str(len(self.bot.voice_clients)) + s)
+        embed.add_field(name="Processor Info", value='`' + proc_info + '`')
+        embed.add_field(name="Voice Sessions", value=str(len(self.bot.voice_clients)))
         logging.debug("Created Embed")
         await self.bot.send_message(ctx.message.channel, embed=embed)
 
