@@ -773,10 +773,15 @@ class General:
         global errors
         await self.bot.send_typing(ctx.message.channel)
         sysmem = psutil.virtual_memory()
+        logging.debug("Got VM state")
         elapsed_time = time.gmtime(time.time() - start_time)
+        logging.debug("Got bot uptime")
         stp = str(elapsed_time[7] - 1) + " days, " + str(elapsed_time[3]) + " hours, " + str(elapsed_time[4]) + " minutes"
+        logging.debug("Formatted bot uptime")
         mem = str(memory() / 1000000) + " / " + str(sysmem.total / 1000000) + " MB"
-        await self.bot.send_typing(ctx.message.channel)
+        logging.debug("Formatted VM")
+        users = sum(1 for _ in self.bot.get_all_members())
+        logging.debug("Got all bot users")
         embed = discord.Embed(color=ctx.message.server.me.color)
         embed.title = "NanoBot Status"
         embed.set_footer(text="NanoBot#2520")
@@ -787,9 +792,10 @@ class General:
         embed.add_field(name="Uptime", value=stp)
         embed.add_field(name="Errors", value=str(errors) + " (" + str(round(errors/len(cmds_this_session) * 100)) + "%)")
         embed.add_field(name="Servers", value=str(len(self.bot.servers)))
-        embed.add_field(name="Users", value=str(sum(1 for _ in self.bot.get_all_members())))
+        embed.add_field(name="Users", value=str(users))
         embed.add_field(name="Used Memory", value=mem)
         embed.add_field(name="Voice Sessions", value=str(len(self.bot.voice_clients)))
+        logging.debug("Created Embed")
         await self.bot.send_message(ctx.message.channel, embed=embed)
 
     @commands.command(pass_context=True, no_pm=True, aliases=['server', 'guildinfo', 'serverinfo'])
