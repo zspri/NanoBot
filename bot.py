@@ -57,7 +57,8 @@ def memory():
 cmds_this_session = []
 admin_ids = ["233325229395410964", "236251438685093889", "294210459144290305", "233366211159785473"]
 songs_played = []
-start_time = "null"
+start_time = None
+st_servers = None
 version = "1.3-beta"
 _uuid = uuid.uuid1()
 queue = {}
@@ -259,7 +260,7 @@ class Music:
         try:
             player = await state.voice.create_ytdl_player(song, ytdl_options=opts, after=state.toggle_next, before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5")
         except OSError as e:
-            print(color.RED + "ERROR: " + e + color.RESET)
+            print(color.RED + "ERROR: " + str(e) + color.RESET)
             await bot.edit_message(tmp, ":gun: A fatal error occurred: `{0}: {1}` Please report this at https://discord.gg/eDRnXd6.".format(str(type(e).__name__), str(e)[:1900]))
         except Exception as e:
             e = str(e)
@@ -771,6 +772,7 @@ class General:
         global start_time
         global version
         global errors
+        global st_servers
         await self.bot.send_typing(ctx.message.channel)
         sysmem = psutil.virtual_memory()
         logging.debug("Got VM state")
@@ -782,6 +784,9 @@ class General:
         logging.debug("Formatted VM")
         users = sum(1 for _ in self.bot.get_all_members())
         logging.debug("Got all bot users")
+        s = len(self.bot.servers) - len(st_servers)
+        if not str(s[0]) == "-"
+            s = " (+" + s + ")"
         embed = discord.Embed(color=ctx.message.server.me.color)
         embed.title = "NanoBot Status"
         embed.set_footer(text="NanoBot#2520")
@@ -794,7 +799,7 @@ class General:
         embed.add_field(name="Servers", value=str(len(self.bot.servers)))
         embed.add_field(name="Users", value=str(users))
         embed.add_field(name="Used Memory", value=mem)
-        embed.add_field(name="Voice Sessions", value=str(len(self.bot.voice_clients)))
+        embed.add_field(name="Voice Sessions", value=str(len(self.bot.voice_clients)) + s)
         logging.debug("Created Embed")
         await self.bot.send_message(ctx.message.channel, embed=embed)
 
@@ -947,12 +952,14 @@ async def on_message(message): # When a message is sent
 @bot.event
 async def on_ready():
     global start_time
+    global st_servers
     print(color.BLUE + 'Logged in as' + color.RESET)
     print(color.BLUE + bot.user.name + "#" + str(bot.user.discriminator) + color.RESET)
     print(color.BLUE + bot.user.id + color.RESET)
     print('------')
     await bot.change_presence(game=discord.Game(name='Type !!help'))
     start_time = time.time()
+    st_servers = bot.servers
     os.makedirs('data', exist_ok=True)
     # atexit.register(os.system, "start bot.py")
 
