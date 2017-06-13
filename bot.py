@@ -66,7 +66,7 @@ def memory():
     return int(result[0].WorkingSet)
 
 cmds_this_session = []
-admin_ids = ["233325229395410964", "236251438685093889", "294210459144290305", "233366211159785473"]
+admin_ids = ["247036033500315649", "233325229395410964", "236251438685093889", "294210459144290305", "233366211159785473"]
 songs_played = []
 start_time = None
 st_servers = None
@@ -726,60 +726,6 @@ class General:
         print(cat)
         await self.bot.say("Here is your random cat: " + str(cat))
 
-    @commands.command(pass_context=True, aliases=['github', 'githubstatus', 'ghstats'])
-    async def ghstatus(self, ctx): # !!ghstatus
-        """Shows GitHub status (From https://status.github.com)"""
-        await self.bot.send_typing(ctx.message.channel)
-        st = urllib.request.urlopen('https://status.github.com/api/last-message.json')
-        st = str(st.read())
-        st = st[2:]
-        st = st[:len(st) - 1]
-        st = ast.literal_eval(st)
-        status = st['status']
-        desc = st['body']
-        timestamp = st['created_on']
-        color = discord.Color.default()
-        if status == "good":
-            color = discord.Color.green()
-        elif status == "minor":
-            color = discord.Color.gold()
-        elif status == "major":
-            color = discord.Color.red()
-        embed = discord.Embed(color=color)
-        embed.title="GitHub Status"
-        embed.set_footer(text="Last updated " + timestamp)
-        embed.add_field(name="Status", value=status)
-        embed.add_field(name="Description", value=desc)
-        embed.set_thumbnail(url="https://maxcdn.icons8.com/iOS7/PNG/75/Logos/github_copyrighted_filled-75.png")
-        await self.bot.send_message(ctx.message.channel, embed=embed)
-
-    @commands.command(pass_context=True, aliases=['dstats', 'discordstats', 'dstatus'])
-    async def discordstatus(self, ctx): # !!discordstatus
-        """Shows Discord status (From https://status.discordapp.com)"""
-        await self.bot.send_typing(ctx.message.channel)
-        st = urllib.request.urlopen('https://srhpyqt94yxb.statuspage.io/api/v2/status.json')
-        st = str(st.read())
-        st = st[2:]
-        st = st[:len(st) - 1]
-        st = ast.literal_eval(st)
-        status = st['status']['indicator']
-        desc = st['status']['description']
-        timestamp = st['page']['updated_at']
-        color = discord.Color.default()
-        if status == "none":
-            color = discord.Color.green()
-        elif status == "minor":
-            color = discord.Color.gold()
-        elif status == "major":
-            color = discord.Color.red()
-        embed = discord.Embed(color=color)
-        embed.title="Discord Status"
-        embed.set_footer(text="Last updated " + timestamp)
-        embed.add_field(name="Status", value=status)
-        embed.add_field(name="Description", value=desc)
-        embed.set_thumbnail(url="https://discordapp.com/assets/2c21aeda16de354ba5334551a883b481.png")
-        await self.bot.send_message(ctx.message.channel, embed=embed)
-
     @commands.command(pass_context=True, no_pm=True, aliases=['botinfo'])
     async def info(self, ctx): # !!info
         """Shows bot info."""
@@ -898,12 +844,138 @@ class General:
         """Hello, world!"""
         await self.bot.say(':wave: Hi, I\'m NanoBot! I can make your Discord server better with all of my features! Type `!!help` for more info, or go to http://bot.nanomotion.xyz')
 
+class Status:
+
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.group(pass_context=True)
+    async def status(self, ctx): # !!status
+        f = open('status_help.txt')
+        await self.bot.say(f.read())
+        f.close()
+
+    @status.command()
+    async def help(self):
+        f = open('status_help.txt')
+        await self.bot.say(f.read())
+        f.close()
+
+    @status.command(pass_context=True)
+    async def discord(self, ctx): # Discord Status
+        """Shows Discord status (From https://status.discordapp.com)"""
+        await self.bot.send_typing(ctx.message.channel)
+        st = urllib.request.urlopen('https://srhpyqt94yxb.statuspage.io/api/v2/status.json')
+        st = str(st.read())
+        st = st[2:]
+        st = st[:len(st) - 1]
+        st = ast.literal_eval(st)
+        status = st['status']['indicator']
+        desc = st['status']['description']
+        timestamp = st['page']['updated_at']
+        color = discord.Color.default()
+        if status == "none":
+            color = discord.Color.green()
+        elif status == "minor":
+            color = discord.Color.gold()
+        elif status == "major":
+            color = discord.Color.red()
+        embed = discord.Embed(color=color)
+        embed.title="Discord Status"
+        embed.set_footer(text="Last updated " + timestamp)
+        embed.add_field(name="Status", value=status)
+        embed.add_field(name="Description", value=desc)
+        embed.set_thumbnail(url="https://discordapp.com/assets/2c21aeda16de354ba5334551a883b481.png")
+        await self.bot.send_message(ctx.message.channel, embed=embed)
+
+    @status.command(pass_context=True)
+    async def github(self, ctx): # GitHub Status
+        """Shows GitHub status (From https://status.github.com)"""
+        await self.bot.send_typing(ctx.message.channel)
+        st = urllib.request.urlopen('https://status.github.com/api/last-message.json')
+        st = str(st.read())
+        st = st[2:]
+        st = st[:len(st) - 1]
+        st = ast.literal_eval(st)
+        status = st['status']
+        desc = st['body']
+        timestamp = st['created_on']
+        color = discord.Color.default()
+        if status == "good":
+            color = discord.Color.green()
+        elif status == "minor":
+            color = discord.Color.gold()
+        elif status == "major":
+            color = discord.Color.red()
+        embed = discord.Embed(color=color)
+        embed.title="GitHub Status"
+        embed.set_footer(text="Last updated " + timestamp)
+        embed.add_field(name="Status", value=status)
+        embed.add_field(name="Description", value=desc)
+        embed.set_thumbnail(url="https://maxcdn.icons8.com/iOS7/PNG/75/Logos/github_copyrighted_filled-75.png")
+        await self.bot.send_message(ctx.message.channel, embed=embed)
+
+    @status.command(pass_context=True)
+    async def reddit(self, ctx): # Reddit Status
+        """Shows Reddit status (From https://redditstatus.com)"""
+        await self.bot.send_typing(ctx.message.channel)
+        st = urllib.request.urlopen('http://2kbc0d48tv3j.statuspage.io/api/v2/status.json')
+        st = str(st.read())
+        st = st[2:]
+        st = st[:len(st) - 1]
+        st = ast.literal_eval(st)
+        status = st['status']['description']
+        desc = st['status']['indicator']
+        timestamp = st['page']['updated_at']
+        color = discord.Color.default()
+        if status == "good":
+            color = discord.Color.green()
+        elif status == "minor":
+            color = discord.Color.gold()
+        elif status == "major":
+            color = discord.Color.red()
+        embed = discord.Embed(color=color)
+        embed.title="Reddit Status"
+        embed.set_footer(text="Last updated " + timestamp)
+        embed.add_field(name="Status", value=status)
+        embed.add_field(name="Description", value=desc)
+        embed.set_thumbnail(url="http://img.washingtonpost.com/rf/image_1024w/2010-2019/WashingtonPost/2012/08/15/National-Enterprise/Images/reddit-alien.jpg")
+        await self.bot.send_message(ctx.message.channel, embed=embed)
+
+    @status.command(pass_context=True)
+    async def hi_rez(self, ctx): # Hi-Rez Studios Status
+        """Shows Hi-Rez Studios status (From https://status.hirezstudios.com)"""
+        await self.bot.send_typing(ctx.message.channel)
+        st = urllib.request.urlopen('http://stk4xr7r1y0r.statuspage.io/api/v2/status.json')
+        st = str(st.read())
+        st = st[2:]
+        st = st[:len(st) - 1]
+        st = ast.literal_eval(st)
+        status = st['status']['description']
+        desc = st['status']['indicator']
+        timestamp = st['page']['updated_at']
+        color = discord.Color.default()
+        if status == "good":
+            color = discord.Color.green()
+        elif status == "minor":
+            color = discord.Color.gold()
+        elif status == "major":
+            color = discord.Color.red()
+        embed = discord.Embed(color=color)
+        embed.title="Reddit Status"
+        embed.set_footer(text="Last updated " + timestamp)
+        embed.add_field(name="Status", value=status)
+        embed.add_field(name="Description", value=desc)
+        embed.set_thumbnail(url="https://smitegame.s3.amazonaws.com/statuspage/Logo_Hi-Rez.jpg")
+        await self.bot.send_message(ctx.message.channel, embed=embed)
+
 bot = commands.Bot(command_prefix=commands.when_mentioned_or('!!'), description='A music, fun, and moderation bot for Discord.')
 bot.add_cog(Music(bot))
 bot.add_cog(Moderation(bot))
 bot.add_cog(Admin(bot))
 bot.add_cog(General(bot))
 bot.add_cog(YouTube(bot))
+bot.add_cog(Status(bot))
 
 @bot.event
 async def on_server_join(server): # When the bot joins a server
@@ -941,6 +1013,11 @@ async def on_command_error(error, ctx): # When a command error occurrs
         else:
             await bot.send_message(ctx.message.channel, ":warning: {}, you are missing required arguments.".format(ctx.message.author.mention))
     elif isinstance(error, discord.ext.commands.errors.BadArgument):
+        if ctx.command.name == "ping":
+            await bot.send_message(ctx.message.channel, ":warning: {}, `times` is an optional argument that must be an int.".format(ctx.message.author.mention))
+        elif ctx.command.name == "status":
+            await bot.send_message(ctx.message.channel, ":warning: {}, That is not a valid subcommmand. Type `!!status help` for help.".format(ctx.message.author.mention))
+        else:
         await bot.send_message(ctx.message.channel, ":warning: {}, you passed an invalid argument.".format(ctx.message.author.mention))
     elif isinstance(error, discord.Forbidden):
         pass

@@ -1,0 +1,11 @@
+```markdown
+< Status Command >
+[1]: General
+!!status help - Shows this message
+!!status github - status.github.com
+!!status scratch - api.scratch.mit.edu
+[2]: Social Media
+!!status reddit - redditstatus.com
+[3]: Games
+!!status hi_rez - status.hirezstudios.com
+```
