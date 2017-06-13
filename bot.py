@@ -97,13 +97,15 @@ if __name__ == "__main__":
         sys.exit(x)
     elif args.verbose:
         logging.basicConfig(format='[%(asctime)s] (%(levelname)s) %(name)s: %(message)s', level=logging.DEBUG, datefmt='%m/%d/%Y %I:%M:%S %p')
-        logging.DEBUG("Logging level set to DEBUG")
+        logging.debug("Logging level set to DEBUG")
     elif args.maintenance:
         x = os.system('start maintenance.py')
         sys.exit(x)
     if args.gapi_token:
         DEVELOPER_KEY = args.gapi_token
+        logging.warn('Using custom GAPI token {}'.format(DEVELOPER_KEY))
     if args.no_color:
+        logging.info("Running with no color")
         color.BLUE = ""
         color.YELLOW = ""
         color.RED = ""
@@ -977,12 +979,13 @@ async def on_ready():
     os.makedirs('data', exist_ok=True)
     # atexit.register(os.system, "start bot.py")
 
-try:
-    bot.run(os.getenv('NANOBOT_TOKEN'))
-except ConnectionResetError as e:
-    logging.fatal('The connection was reset!\n{}'.format(e))
-except OSError as e:
-    logging.fatal('A system error occurred!\n{}'.format(e))
-except Exception as e:
-    logging.fatal('A fatal error occurred!\n{}'.format())
-ctypes.windll.user32.MessageBoxA(0, "Bot exited at {}.".format(time.localtime(time.time())), "NanoBot", mbopts.ICON_EXLAIM)
+if __name__ == "__main__":
+    try:
+        bot.run(os.getenv('NANOBOT_TOKEN'))
+    except ConnectionResetError as e:
+        logging.fatal('The connection was reset!\n{}'.format(e))
+    except OSError as e:
+        logging.fatal('A system error occurred!\n{}'.format(e))
+    except Exception as e:
+        logging.fatal('A fatal error occurred!\n{}'.format())
+    ctypes.windll.user32.MessageBoxA(0, "Bot exited at {}.".format(time.localtime(time.time())), "NanoBot", mbopts.ICON_EXLAIM)
