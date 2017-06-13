@@ -10,8 +10,7 @@
 !!ping - Pong!
 !!dog - http://random.dog
 !!cat - http://random.cat
-!!ghstatus - GitHub status
-!!dstats - Discord status
+!!status - Shows statuspage.io info
 [2]: Moderation
 !!prune <messages> - Bulk-deletes up to 100 messages
 !!prune2 <messages> - Individually deletes up to 100 messages

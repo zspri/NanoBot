@@ -851,9 +851,10 @@ class Status:
 
     @commands.group(pass_context=True)
     async def status(self, ctx): # !!status
-        f = open('status_help.txt')
-        await self.bot.say(f.read())
-        f.close()
+            if ctx.invoked_subcommand is None:
+                f = open('status_help.txt')
+                await self.bot.say(f.read())
+                f.close()
 
     @status.command()
     async def help(self):
@@ -876,15 +877,15 @@ class Status:
         color = discord.Color.default()
         if status == "none":
             color = discord.Color.green()
-        elif status == "minor":
+        elif status == "minor" or status == "maintenance":
             color = discord.Color.gold()
         elif status == "major":
             color = discord.Color.red()
         embed = discord.Embed(color=color)
         embed.title="Discord Status"
         embed.set_footer(text="Last updated " + timestamp)
-        embed.add_field(name="Status", value=status)
-        embed.add_field(name="Description", value=desc)
+        embed.add_field(name=":vertical_traffic_light: Status", value=status)
+        embed.add_field(name=":speech_balloon: Description", value=desc)
         embed.set_thumbnail(url="https://discordapp.com/assets/2c21aeda16de354ba5334551a883b481.png")
         await self.bot.send_message(ctx.message.channel, embed=embed)
 
@@ -903,15 +904,15 @@ class Status:
         color = discord.Color.default()
         if status == "good":
             color = discord.Color.green()
-        elif status == "minor":
+        elif status == "minor" or status == "maintenance":
             color = discord.Color.gold()
         elif status == "major":
             color = discord.Color.red()
         embed = discord.Embed(color=color)
         embed.title="GitHub Status"
         embed.set_footer(text="Last updated " + timestamp)
-        embed.add_field(name="Status", value=status)
-        embed.add_field(name="Description", value=desc)
+        embed.add_field(name=":vertical_traffic_light: Status", value=status)
+        embed.add_field(name=":speech_balloon: Description", value=desc)
         embed.set_thumbnail(url="https://maxcdn.icons8.com/iOS7/PNG/75/Logos/github_copyrighted_filled-75.png")
         await self.bot.send_message(ctx.message.channel, embed=embed)
 
@@ -924,21 +925,21 @@ class Status:
         st = st[2:]
         st = st[:len(st) - 1]
         st = ast.literal_eval(st)
-        status = st['status']['description']
-        desc = st['status']['indicator']
+        status = st['status']['indicator']
+        desc = st['status']['description']
         timestamp = st['page']['updated_at']
         color = discord.Color.default()
-        if status == "good":
+        if status == "none":
             color = discord.Color.green()
-        elif status == "minor":
+        elif status == "minor" or status == "maintenance":
             color = discord.Color.gold()
         elif status == "major":
             color = discord.Color.red()
         embed = discord.Embed(color=color)
         embed.title="Reddit Status"
         embed.set_footer(text="Last updated " + timestamp)
-        embed.add_field(name="Status", value=status)
-        embed.add_field(name="Description", value=desc)
+        embed.add_field(name=":vertical_traffic_light: Status", value=status)
+        embed.add_field(name=":speech_balloon: Description", value=desc)
         embed.set_thumbnail(url="http://img.washingtonpost.com/rf/image_1024w/2010-2019/WashingtonPost/2012/08/15/National-Enterprise/Images/reddit-alien.jpg")
         await self.bot.send_message(ctx.message.channel, embed=embed)
 
@@ -951,22 +952,21 @@ class Status:
         st = st[2:]
         st = st[:len(st) - 1]
         st = ast.literal_eval(st)
-        status = st['status']['description']
-        desc = st['status']['indicator']
+        status = st['status']['indicator']
+        desc = st['status']['description']
         timestamp = st['page']['updated_at']
         color = discord.Color.default()
-        if status == "good":
+        if status == "none":
             color = discord.Color.green()
-        elif status == "minor":
+        elif status == "minor" or status == "maintenance":
             color = discord.Color.gold()
         elif status == "major":
             color = discord.Color.red()
         embed = discord.Embed(color=color)
-        embed.title="Reddit Status"
+        embed.title="Hi-Rez Studios Status"
         embed.set_footer(text="Last updated " + timestamp)
-        embed.add_field(name="Status", value=status)
-        embed.add_field(name="Description", value=desc)
-        embed.set_thumbnail(url="https://smitegame.s3.amazonaws.com/statuspage/Logo_Hi-Rez.jpg")
+        embed.add_field(name=":vertical_traffic_light: Status", value=status)
+        embed.add_field(name=":speech_balloon: Description", value=desc)
         await self.bot.send_message(ctx.message.channel, embed=embed)
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or('!!'), description='A music, fun, and moderation bot for Discord.')
@@ -1018,7 +1018,7 @@ async def on_command_error(error, ctx): # When a command error occurrs
         elif ctx.command.name == "status":
             await bot.send_message(ctx.message.channel, ":warning: {}, That is not a valid subcommmand. Type `!!status help` for help.".format(ctx.message.author.mention))
         else:
-        await bot.send_message(ctx.message.channel, ":warning: {}, you passed an invalid argument.".format(ctx.message.author.mention))
+            await bot.send_message(ctx.message.channel, ":warning: {}, you passed an invalid argument.".format(ctx.message.author.mention))
     elif isinstance(error, discord.Forbidden):
         pass
     elif isinstance(error, discord.ext.commands.errors.NoPrivateMessage):
