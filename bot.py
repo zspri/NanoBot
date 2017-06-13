@@ -27,6 +27,7 @@ import timeit
 import argparse
 import wmi
 import psutil
+import ctypes
 # import atexit
 
 colorama.init(autoreset=True)
@@ -36,6 +37,16 @@ class color:
     RED = colorama.Fore.WHITE + colorama.Back.RED
     GREEN = colorama.Fore.WHITE + colorama.Back.GREEN
     RESET = colorama.Style.RESET_ALL
+
+class mbopts:
+    OK = 0x0
+    OKCXL = 0x01
+    YESNOCXL = 0x03
+    YESNO = 0x04
+    HELP = 0x4000
+    ICON_EXLAIM = 0x30
+    ICON_INFO = 0x40
+    ICON_STOP = 0x10
 
 def queue_get_all(q):
     items = []
@@ -966,4 +977,12 @@ async def on_ready():
     os.makedirs('data', exist_ok=True)
     # atexit.register(os.system, "start bot.py")
 
-bot.run(os.getenv('NANOBOT_TOKEN'))
+try:
+    bot.run(os.getenv('NANOBOT_TOKEN'))
+except ConnectionResetError as e:
+    logging.fatal('The connection was reset!\n{}'.format(e))
+except OSError as e:
+    logging.fatal('A system error occurred!\n{}'.format(e))
+except Exception as e:
+    logging.fatal('A fatal error occurred!\n{}'.format())
+ctypes.windll.user32.MessageBoxA(0, "Bot exited at {}.".format(time.localtime(time.time())), "NanoBot", mbopts.ICON_EXLAIM)
