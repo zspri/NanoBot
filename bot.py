@@ -220,20 +220,20 @@ class Music:
             await self.bot.edit_message(tmp, ':no_entry_sign: Couldn\'t connect to voice channel.')
             errors += 1
             try:
-                await bot.send_message(discord.User(id="236251438685093889"), ":warning: An error occurred in `join`: ```" + traceback.format_exc()[:1800] + "```")
+                await self.bot.send_message(discord.User(id="236251438685093889"), ":warning: An error occurred in `join`: ```" + traceback.format_exc()[:1800] + "```")
             except Exception as e:
                 logging.warn("Failed to create direct message: " + str(e))
                 errors += 1
         else:
-            await bot.edit_message(tmp, ':notes: Ready to play audio in `' + channel.name + '`')
+            await self.bot.edit_message(tmp, ':notes: Ready to play audio in `' + channel.name + '`')
 
     @commands.command(pass_context=True, no_pm=True)
     async def summon(self, ctx): # !!summon
         """Summons the bot to join your voice channel."""
         summoned_channel = ctx.message.author.voice_channel
-        tmp = await bot.send_message(ctx.message.channel, ":clock2: Please wait...")
+        tmp = await self.bot.send_message(ctx.message.channel, ":clock2: Please wait...")
         if summoned_channel is None:
-            await bot.edit_message(tmp, ':no_entry_sign: You are not in a voice channel!')
+            await self.bot.edit_message(tmp, ':no_entry_sign: You are not in a voice channel!')
             return False
         else:
             tmp = await bot.edit_message(tmp, ":clock2: Connecting to voice channel `" + str(summoned_channel.name) + "`...")
