@@ -203,21 +203,21 @@ class Music:
         tmp = await bot.send_message(ctx.message.channel, ":clock2: Connecting to voice channel `" + str(channel.name) + "`...")
         try:
             await self.create_voice_client(channel)
-        except discord.ClientException:
-            await bot.edit_message(tmp, ':no_entry_sign: Already in a voice channel!')
+        except discord.errors.ClientException:
+            await self.bot.edit_message(tmp, ':no_entry_sign: Already in a voice channel!')
             errors += 1
         except TimeoutError:
-            await bot.edit_message(tmp, ':no_entry_sign: Connection timed out.')
+            await self.bot.edit_message(tmp, ':no_entry_sign: Connection timed out.')
             errors += 1
-        except discord.Forbidden:
-            await bot.edit_message(tmp, ':no_entry_sign: I don\'t have permission to join that channel!')
+        except discord.errors.Forbidden:
+            await self.bot.edit_message(tmp, ':no_entry_sign: I don\'t have permission to join that channel!')
             errors += 1
-        except discord.InvalidArgument:
-            await bot.edit_message(tmp, ':no_entry_sign: Not a valid voice channel!')
+        except discord.errors.InvalidArgument:
+            await self.bot.edit_message(tmp, ':no_entry_sign: Not a valid voice channel!')
             errors += 1
         except Exception as e:
             print(color.RED + "ERROR: " + str(e) + color.RESET)
-            await bot.edit_message(tmp, ':no_entry_sign: Couldn\'t connect to voice channel.')
+            await self.bot.edit_message(tmp, ':no_entry_sign: Couldn\'t connect to voice channel.')
             errors += 1
             try:
                 await bot.send_message(discord.User(id="236251438685093889"), ":warning: An error occurred in `join`: ```" + traceback.format_exc()[:1800] + "```")
@@ -745,9 +745,6 @@ class General:
         logging.debug("Formatted VM")
         users = sum(1 for _ in self.bot.get_all_members())
         logging.debug("Got all bot users")
-        s = str(len(self.bot.servers) - len(st_servers))
-        if not s[0] == "-":
-            s = " (+" + s + ")"
         embed = discord.Embed(color=ctx.message.server.me.color)
         embed.title = "NanoBot Status"
         embed.set_footer(text="NanoBot#2520")
@@ -1019,7 +1016,7 @@ async def on_command_error(error, ctx): # When a command error occurrs
             await bot.send_message(ctx.message.channel, ":warning: {}, That is not a valid subcommmand. Type `!!status help` for help.".format(ctx.message.author.mention))
         else:
             await bot.send_message(ctx.message.channel, ":warning: {}, you passed an invalid argument.".format(ctx.message.author.mention))
-    elif isinstance(error, discord.Forbidden):
+    elif isinstance(error, discord.errors.Forbidden) or isinstance(error, discord.Forbidden):
         pass
     elif isinstance(error, discord.ext.commands.errors.NoPrivateMessage):
         await bot.send_message(ctx.message.channel, ":no_entry_sign: This command can't be used in private messages.")
