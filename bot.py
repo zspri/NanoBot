@@ -406,57 +406,60 @@ class Moderation:
     def __init__(self, bot):
         self.bot = bot
 
+    def ismod(ctx):
+        passed = False
+        for role in ctx.message.author.roles:
+            if role.name == "NanoBot Mod" or role.name == "Moderator":
+                passed = True
+        return passed
+
+
     @commands.command(pass_context=True, no_pm=True)
+    @commands.check(ismod)
     async def prune(self, ctx, limit : int): # !!prune
         """Bulk-deletes the specified amount of messages."""
         global errors
-        if ctx.message.author == ctx.message.server.owner:
-            if not limit > 1:
-                await self.bot.say(":no_entry_sign: You can only bulk-delete more than 1 message!")
-            elif not limit < 101:
-                await self.bot.say(":no_entry_sign: You can only bulk-delete less than 101 messages!")
-            else:
-                counter = 0
-                msgs = []
-                await self.bot.say('Deleting messages... :clock2:')
-                try:
-                    async for log in self.bot.logs_from(ctx.message.channel, limit=limit):
-                        msgs.append(log)
-                        counter += 1
-                    await self.bot.delete_messages(msgs)
-                except Exception as e:
-                    errors += 1
-                    print(color.RED + "ERROR: " + str(e) + color.RESET)
-                    await self.bot.say(exc_msg.format(str(e)))
-                    try:
-                        await bot.send_message(discord.User(id="236251438685093889"), ":warning: An error occurred in `" + str(event) + "`: ```" + traceback.format_exc()[:1800] + "```")
-                    except Exception as e:
-                        errors += 1
-                        logging.warn("Failed to create direct message: " + str(e))
-                else:
-                    await self.bot.say(':zap: Deleted {} messages.'.format(counter))
+        if not limit > 1:
+            await self.bot.say(":no_entry_sign: You can only bulk-delete more than 1 message!")
+        elif not limit < 101:
+            await self.bot.say(":no_entry_sign: You can only bulk-delete less than 101 messages!")
         else:
-            await self.bot.say(":no_entry_sign: You don't have permission to do that!")
-
-    @commands.command(pass_context=True)
-    async def prune2(self, ctx, *, messages : int): # !!prune2
-        """Individually deletes the specified amount of messages."""
-        global errors
-        if ctx.message.author == ctx.message.server.owner:
             counter = 0
+            msgs = []
             await self.bot.say('Deleting messages... :clock2:')
             try:
-                async for log in self.bot.logs_from(ctx.message.channel, limit=messages):
-                    await self.bot.delete_message(log)
+                async for log in self.bot.logs_from(ctx.message.channel, limit=limit):
+                    msgs.append(log)
                     counter += 1
+                await self.bot.delete_messages(msgs)
             except Exception as e:
                 errors += 1
                 print(color.RED + "ERROR: " + str(e) + color.RESET)
-                await self.bot.send_message(ctx.message.channel, exc_msg.format(e))
+                await self.bot.say(exc_msg.format(str(e)))
+                try:
+                    await self.bot.send_message(discord.User(id="236251438685093889"), ":warning: An error occurred in `" + str(event) + "`: ```" + traceback.format_exc()[:1800] + "```")
+                except Exception as e:
+                    errors += 1
+                    logging.warn("Failed to create direct message: " + str(e))
             else:
-                await self.bot.send_message(ctx.message.channel, 'Deleted {} messages.'.format(counter))
+                await self.bot.say(':zap: Deleted {} messages.'.format(counter))
+
+    @commands.command(pass_context=True)
+    @commands.check(ismod)
+    async def prune2(self, ctx, *, messages : int): # !!prune2
+        """Individually deletes the specified amount of messages."""
+        counter = 0
+        await self.bot.say('Deleting messages... :clock2:')
+        try:
+            async for log in self.bot.logs_from(ctx.message.channel, limit=messages):
+                await self.bot.delete_message(log)
+                counter += 1
+        except Exception as e:
+            errors += 1
+            print(color.RED + "ERROR: " + str(e) + color.RESET)
+            await self.bot.send_message(ctx.message.channel, exc_msg.format(e))
         else:
-            await self.bot.send_message(ctx.message.channel, ':warning: No permission! You must be the server owner.')
+            await self.bot.send_message(ctx.message.channel, 'Deleted {} messages.'.format(counter))
 
 class Admin:
 
@@ -754,7 +757,7 @@ class General:
         embed.add_field(name="Songs Played", value=str(len(songs_played)))
         embed.add_field(name="Uptime", value=stp)
         embed.add_field(name="Errors", value=str(errors) + " (" + str(round(errors/len(cmds_this_session) * 100)) + "%)")
-        embed.add_field(name="Servers", value=str(len(self.bot.servers)) + s)
+        embed.add_field(name="Servers", value=str(len(self.bot.servers)))
         embed.add_field(name="Users", value=str(users))
         embed.add_field(name="Used Memory", value=mem)
         embed.add_field(name="Processor Info", value='`' + proc_info + '`')
@@ -995,7 +998,7 @@ async def on_command_error(error, ctx): # When a command error occurrs
     if isinstance(error, discord.ext.commands.errors.CommandNotFound):
         pass
     if isinstance(error, discord.ext.commands.errors.CheckFailure):
-        await bot.send_message(ctx.message.channel, ":no_entry_sign: {}, you don't have permission to use this command.".format(ctx.message.author.mention))
+        await bot.send_message(ctx.message.channel, ":no_entry_sign: {}, you need to be a **NanoBot Mod** to use this command. For more help, see the docs: http://bot.nanomotion.xyz/docs".format(ctx.message.author.mention))
     elif isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
         if ctx.command.name == "play":
             await bot.send_message(ctx.message.channel, ":warning: {}, `query/url` is a required argument that is missing.".format(ctx.message.author.mention))
