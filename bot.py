@@ -409,7 +409,7 @@ class Moderation:
     def ismod(ctx):
         passed = False
         for role in ctx.message.author.roles:
-            if role.name == "NanoBot Mod" or role.name == "Moderator":
+            if role.name == "NanoBot Mod" or role.name == "Moderator" or role.name == "Mod" or role.name == "Discord Mod":
                 passed = True
         return passed
 
@@ -469,7 +469,7 @@ class Admin:
     @commands.command(pass_context=True, hidden=True)
     async def eval(self, ctx, *, _eval : str): # !!eval
         if not str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(":warning: You need to be **NanoBot Owner** to do that.")
+            await self.bot.say(":no_entry_sign: You need to be **NanoBot Owner** to do that.")
         else:
             res = "null"
             err = 0
@@ -503,7 +503,7 @@ class Admin:
     @commands.command(pass_context=True, hidden=True)
     async def exec(self, ctx, *, _eval : str): # !!exec
         if not str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(":warning: You need to be **NanoBot Owner** to do that.")
+            await self.bot.say(":no_entry_sign: You need to be **NanoBot Owner** to do that.")
         else:
             res = "null"
             err = 0
@@ -537,7 +537,7 @@ class Admin:
     @commands.command(pass_context=True, hidden=True)
     async def setplaying(self, ctx, *, game : str): # !!setplaying
         if not str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(":warning: You need to be **NanoBot Owner** to do that.")
+            await self.bot.say(":no_entry_sign: You need to be **NanoBot Owner** to do that.")
         else:
             try:
                 await self.bot.change_presence(game=discord.Game(name=game))
@@ -549,7 +549,7 @@ class Admin:
     async def reload(self, ctx, *, module : str): # !!reload
         global errors
         if not str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(":warning: You need to be **NanoBot Owner** to do that.")
+            await self.bot.say(":no_entry_sign: You need to be **NanoBot Owner** to do that.")
         else:
             try:
                 logging.info('Reloading ' + module + '...')
@@ -565,7 +565,7 @@ class Admin:
     async def setstatus(self, ctx, *, status : str): # !!setstatus
         global errors
         if not str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(":warning: You need to be **NanoBot Owner** to do that.")
+            await self.bot.say(":no_entry_sign: You need to be **NanoBot Owner** to do that.")
         else:
             try:
                 if status == "online":
@@ -777,7 +777,7 @@ class General:
                stp2 = stp2 + role.name
             else:
                 stp2 = stp2 + role.name + ", "
-        embed = discord.Embed(color=discord.Color.default())
+        embed = discord.Embed(color=discord.Color(0x7289DA))
         embed.title = "Guild Info"
         embed.set_footer(text="NanoBot#2520")
         embed.set_thumbnail(url=server.icon_url)
