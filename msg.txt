@@ -1,2 +1,0 @@
-**Want to help contribute to NanoBot?**
-Just message <@236251438685093889> with the reason why you should be accepted, and a program that you've written in Python, and you may get the Developer role.
