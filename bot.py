@@ -599,16 +599,18 @@ class Admin:
 
     @commands.command(pass_context=True, hidden=True)
     async def shutdown(self, ctx): # !!shutdown
-        tmp = await self.bot.say("{}, Please respond with the token provided in the console window!".format(ctx.message.author))
-        token = str(uuid.uuid1())
-        logging.info(color.BLUE + "Shutdown token is {}".format(token))
+        tmp = await self.bot.say("{}, Please respond with the token provided in the console window!".format(ctx.message.author.mention))
+        token = str(uuid.uuid4())
+        print(color.BLUE + "Shutdown token is {}".format(token))
         msg = ""
         try:
             msg = await self.bot.wait_for_message(timeout=10, author=ctx.message.author, channel=ctx.message.channel)
         except asyncio.TimeoutError:
             await self.bot.edit_message(tmp, ":warning: Shutdown request timed out.")
         else:
-            if msg.content == token:
+            if msg is None:
+                await self.bot.edit_message(tmp, ":warning: Shutdown request timed out.")
+            elif msg.content.startswith(token):
                 await self.bot.edit_message(tmp, ":wave: Shutting down...")
                 await self.bot.change_presence(status=discord.Status.offline)
                 sys.exit(0)
