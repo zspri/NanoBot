@@ -73,6 +73,7 @@ st_servers = None
 version = "1.3-beta"
 _uuid = uuid.uuid1()
 queue = {}
+disabled_cmds = {} # Format: {'command_name', 'reason'}
 errors = 0
 exc_msg = ":warning: An error occurred:\n```py\n{}\n```\nNeed help? Join the NanoBot support server at https://discord.gg/eDRnXd6"
 DEVELOPER_KEY = str(os.getenv('GAPI_TOKEN'))
@@ -118,7 +119,7 @@ class VoiceEntry:
         self.player = player
 
     def __str__(self):
-        fmt = '*{0.title}* by **{0.uploader}** requested by {1.mention} '
+        fmt = '*{0.title}* by **{0.uploader}** ({0.download_url}) requested by {1.mention} '
         duration = self.player.duration
         if duration:
             fmt = fmt + '`[length: {0[0]}m {0[1]}s]`'.format(divmod(duration, 60))
@@ -173,6 +174,9 @@ class Music:
     def __init__(self, bot):
         self.bot = bot
         self.voice_states = {}
+
+    def isenabled(ctx):
+        global disabled_cmds
 
     def get_voice_state(self, server):
         state = self.voice_states.get(server.id)
@@ -465,6 +469,27 @@ class Admin:
 
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.command(pass_context=True, hidden=True)
+    async def disable(self, ctx, *, cmd_name : str, reason : str = "Command disabled"): # !!disable
+        global disabled_cmds
+        if not str(ctx.message.author.id) in admin_ids:
+            await self.bot.say(":no_entry_sign: You need to be **NanoBot Owner** to do that.")
+        else:
+            disabled_cmds[cmd_name] = reason
+            await self.bot.say("Disabled command **!!{}** with reason `{}`.".format(cmd_name, reason))
+
+    @commands.command(pass_context=True, hidden=True)
+    async def enable(self, ctx, *, cmd_name : str): # !!enable
+        global disabled_cmds
+        if not str(ctx.message.author.id) in admin_ids:
+            await self.bot.say(":no_entry_sign: You need to be **NanoBot Owner** to do that.")
+        else:
+            try:
+                disabled_cmds.pop(cmd_name)
+                await self.bot.say("Enabled command **!!{}**".format(cmd_name))
+            except KeyError:
+                await self.bot.say(":warning: Command is not disabled!")
 
     @commands.command(pass_context=True, hidden=True)
     async def eval(self, ctx, *, _eval : str): # !!eval
