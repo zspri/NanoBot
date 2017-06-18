@@ -6,7 +6,7 @@
 ##########################################
 
 import logging
-logging.basicConfig(format='[%(asctime)s] (%(levelname)s) %(name)s: %(message)s', level=logging.INFO, datefmt='%m/%d/%Y %I:%M:%S %p')
+logging.basicConfig(format='(%(levelname)s) [%(asctime)s] %(name)s: %(message)s', level=logging.INFO, datefmt='%m/%d/%Y %I:%M:%S %p')
 import importlib
 import discord
 import asyncio
@@ -97,7 +97,7 @@ if __name__ == "__main__":
         x = os.system('ping gateway.discord.gg')
         sys.exit(x)
     elif args.verbose:
-        logging.basicConfig(format='[%(asctime)s] (%(levelname)s) %(name)s: %(message)s', level=logging.DEBUG, datefmt='%m/%d/%Y %I:%M:%S %p')
+        logging.basicConfig(format='(%(levelname)s) [%(asctime)s] %(name)s: %(message)s', level=logging.DEBUG, datefmt='%m/%d/%Y %I:%M:%S %p')
         logging.debug("Logging level set to DEBUG")
     elif args.maintenance:
         x = os.system('start maintenance.py')
@@ -371,7 +371,7 @@ class Music:
             return
 
         voter = ctx.message.author
-        users_in_channel = len(ctx.message.server.me.voice.voice_channel.voice_members) - 1====
+        users_in_channel = len(ctx.message.server.me.voice.voice_channel.voice_members) - 1
         if voter == state.current.requester:
             await self.bot.say(':fast_forward: Skipping song...')
             state.skip()
