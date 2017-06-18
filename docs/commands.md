@@ -19,8 +19,8 @@
 | prune2\*     | Individually deletes up to 100 messages.   | !!prune2 <amount>   | Moderation | NanoBot Mod  |
 | join         | Joins the specified voice channel.         | !!join <channel>    | Music      | NanoBot User |
 | summon\*\*   | Joins your voice channel.                  | !!summon            | Music      | NanoBot User |
-| play         | Searches⁺ for and plays the entered query. | !!play <query|url⁺> | Music      | NanoBot User |
-| yt           | Searches YouTube for the entered query.    | !!yt <query|url>    | Music      | NanoBot User |
+| play         | Searches⁺ for and plays the entered query. | !!play <query/url⁺> | Music      | NanoBot User |
+| yt           | Searches YouTube for the entered query.    | !!yt <query/url>    | Music      | NanoBot User |
 | queue        | Shows songs in queue.                      | !!queue             | Music      | NanoBot User |
 | volume       | Changes player volume.                     | !!volume <amount>   | Music      | NanoBot User |
 | pause        | Pauses the current song.                   | !!pause             | Music      | NanoBot User |
@@ -32,5 +32,7 @@
 > NOTE: [] means that arguments are not required, but <> means that they are.
 
 \* NanoBot requires special permissions to perform this command.
+
 \*\* Obsolete.
-⁺ View the list of supported sites here: https://rg3.github.io/youtube-dl/supportedsites.html
+
+⁺ View the list of supported sites here: [https://rg3.github.io/youtube-dl/supportedsites.html](https://rg3.github.io/youtube-dl/supportedsites.html)
