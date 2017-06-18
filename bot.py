@@ -165,7 +165,8 @@ class VoiceState:
                 await self.play_next_song.wait()
             except Exception as e:
                 self.bot.say(exc_msg.format(e))
-                print(color.RED + "ERROR: " + str(e) + color.RESET)
+                logging.error(str(e))
+                logging.error(traceback.format_exc())
 
 class Music:
 
@@ -209,25 +210,17 @@ class Music:
             await self.create_voice_client(channel)
         except discord.errors.ClientException:
             await self.bot.edit_message(tmp, ':no_entry_sign: Already in a voice channel!')
-            errors += 1
         except TimeoutError:
             await self.bot.edit_message(tmp, ':no_entry_sign: Connection timed out.')
             errors += 1
         except discord.errors.Forbidden:
             await self.bot.edit_message(tmp, ':no_entry_sign: I don\'t have permission to join that channel!')
-            errors += 1
         except discord.errors.InvalidArgument:
             await self.bot.edit_message(tmp, ':no_entry_sign: Not a valid voice channel!')
-            errors += 1
         except Exception as e:
-            print(color.RED + "ERROR: " + str(e) + color.RESET)
+            logging.error(str(e))
             await self.bot.edit_message(tmp, ':no_entry_sign: Couldn\'t connect to voice channel.')
             errors += 1
-            try:
-                await self.bot.send_message(discord.User(id="236251438685093889"), ":warning: An error occurred in `join`: ```" + traceback.format_exc()[:1800] + "```")
-            except Exception as e:
-                logging.warn("Failed to create direct message: " + str(e))
-                errors += 1
         else:
             await self.bot.edit_message(tmp, ':notes: Ready to play audio in `' + channel.name + '`')
 
@@ -278,11 +271,12 @@ class Music:
         try:
             player = await state.voice.create_ytdl_player(song, ytdl_options=opts, after=state.toggle_next, before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5")
         except OSError as e:
-            print(color.RED + "ERROR: " + str(e) + color.RESET)
+            logging.fatal(str(e))
             await bot.edit_message(tmp, ":gun: A fatal error occurred: `{0}: {1}` Please report this at https://discord.gg/eDRnXd6.".format(str(type(e).__name__), str(e)[:1900]))
         except Exception as e:
             e = str(e)
-            print(color.RED + "ERROR: " + e + color.RESET)
+            logging.error(e)
+            logging.error(traceback.format_exc())
             errors += 1
             fmt = ':warning: An error occurred: ```py\n' + e[:1900] + '\n```'
             if e.startswith("ERROR: Unsupported URL") or e.startswith("hostname"):
@@ -297,7 +291,7 @@ class Music:
             try:
                 entry = VoiceEntry(ctx.message, player)
             except Exception as e:
-                print(color.RED + "ERROR: " + str(e) + color.RESET)
+                logging.error(str(e))
                 errors += 1
                 await bot.edit_message(tmp, ':gun: A fatal error occurred: `{}`'.format(str(e)[:1900]))
             else:
@@ -377,7 +371,7 @@ class Music:
             return
 
         voter = ctx.message.author
-        users_in_channel = len(state.voice_channel.voice_members) - 1
+        users_in_channel = len(ctx.message.server.me.voice.voice_channel.voice_members) - 1====
         if voter == state.current.requester:
             await self.bot.say(':fast_forward: Skipping song...')
             state.skip()
@@ -438,13 +432,8 @@ class Moderation:
                 await self.bot.delete_messages(msgs)
             except Exception as e:
                 errors += 1
-                print(color.RED + "ERROR: " + str(e) + color.RESET)
-                await self.bot.say(exc_msg.format(str(e)))
-                try:
-                    await self.bot.send_message(discord.User(id="236251438685093889"), ":warning: An error occurred in `" + str(event) + "`: ```" + traceback.format_exc()[:1800] + "```")
-                except Exception as e:
-                    errors += 1
-                    logging.warn("Failed to create direct message: " + str(e))
+                logging.error(str(e))
+                await self.bot.say(exc_msg.format(traceback.format_exc()))
             else:
                 await self.bot.say(':zap: Deleted {} messages.'.format(counter))
 
@@ -460,7 +449,7 @@ class Moderation:
                 counter += 1
         except Exception as e:
             errors += 1
-            print(color.RED + "ERROR: " + str(e) + color.RESET)
+            logging.error(str(e))
             await self.bot.send_message(ctx.message.channel, exc_msg.format(e))
         else:
             await self.bot.send_message(ctx.message.channel, 'Deleted {} messages.'.format(counter))
@@ -636,8 +625,7 @@ class Admin:
             elif msg.content.startswith(token):
                 await self.bot.edit_message(tmp, ":wave: Shutting down...")
                 await self.bot.change_presence(status=discord.Status.offline)
-                sys.exit(0)
-                exit()
+                raise SystemExit
             else:
                 await self.bot.edit_message(tmp, ":no_entry_sign: Invalid token passed!")
 
@@ -647,8 +635,7 @@ class Admin:
             await self.bot.say(":wave: Restarting...")
             await self.bot.change_presence(status=discord.Status.idle)
             os.system('start restart.bat')
-            sys.exit(0)
-            exit()
+            raise SystemExit
 
 class YouTube:
 
@@ -684,6 +671,8 @@ class YouTube:
         try:
             q = YouTube.search(query)
         except HttpError as e:
+            errors += 1
+            logging.error(str(e))
             await self.bot.say(":warning: Error `{status}` occurred: ```json\n{content}\n```".format(status=e.resp.status, content=e.content))
         else:
             q = q[0]
@@ -866,13 +855,13 @@ class General:
                         errors += 1
                     embed.title = "NanoBot Status"
                     embed.add_field(name=":outbox_tray: Pong!", value="Connection took " + str(_time) + "ms")
-                    embed.set_footer(text="status.discordapp.com")
+                    embed.set_footer(text="bot.nanomotion.xyz/status")
                 else:
                     embed = discord.Embed(color=discord.Color.red())
                     embed.title = "NanoBot Status"
                     embed.add_field(name=":outbox_tray: Error", value="Ping returned error code `" + str(res) + "` in " + str(_time) + "ms")
                     errors += 1
-                    embed.set_footer(text="status.discordapp.com")
+                    embed.set_footer(text="bot.nanomotion.xyz/status")
                 await self.bot.send_message(ctx.message.channel, embed=embed)
 
     @commands.command()
@@ -1067,12 +1056,12 @@ bot.add_cog(Status(bot))
 
 @bot.event
 async def on_server_join(server): # When the bot joins a server
-    logging.warn(color.GREEN + "Joined server " + str(server.id)+ " (" + str(server.name) + ")" + color.RESET)
+    print(color.GREEN + "Joined server " + str(server.id)+ " (" + str(server.name) + ")")
     await bot.send_message(server.default_channel, ':wave: Hi, I\'m NanoBot! Thanks for adding me to your server. Type `!!help` for help and tips on what I can do.')
 
 @bot.event
 async def on_server_leave(server): # When the bot leaves a server
-    logging.warn(color.RED + "Left server " + str(server.id) + " (" + str(server.name) + ")" + color.RESET)
+    print(color.RED + "Left server " + str(server.id) + " (" + str(server.name) + ")")
 
 @bot.event
 async def on_member_join(member): # When a member joins a server
@@ -1114,8 +1103,9 @@ async def on_command_error(error, ctx): # When a command error occurrs
     else:
         if ctx.command:
             errors += 1
-            logging.warn(color.YELLOW + "Command error: " + str(error) + color.RESET)
-            await bot.send_message(ctx.message.channel, ":warning: An error occured while processing this command: `{}`".format(error))
+            logging.error(error)
+            logging.error(traceback.format_exc())
+            await bot.send_message(ctx.message.channel, ":gun: An error occured while processing this command: `{}`".format(error))
 
 @bot.event
 async def on_message(message): # When a message is sent
@@ -1153,4 +1143,8 @@ if __name__ == "__main__":
         logging.fatal('A system error occurred!\n{}'.format(e))
     except Exception as e:
         logging.fatal('A fatal error occurred!\n{}'.format())
+    except SystemExit:
+        pass
+    except KeyboardInterrupt:
+        pass
     ctypes.windll.user32.MessageBoxA(0, "Bot exited at {}.".format(time.localtime(time.time())), "NanoBot", mbopts.ICON_EXLAIM)
