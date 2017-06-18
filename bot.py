@@ -876,6 +876,58 @@ class Status:
         f.close()
 
     @status.command(pass_context=True)
+    async def all(self, ctx): # All Statuses
+        await self.bot.send_typing(ctx.message.channel)
+        embed = discord.Embed(color=discord.Color(0x7289DA))
+        class discord_st:
+            st = urllib.request.urlopen('https://srhpyqt94yxb.statuspage.io/api/v2/status.json')
+            st = str(st.read())
+            st = st[2:]
+            st = st[:len(st) - 1]
+            st = ast.literal_eval(st)
+            status = st['status']['indicator']
+            desc = st['status']['description']
+            timestamp = st['page']['updated_at']
+        await self.bot.send_typing(ctx.message.channel)
+        class github_st:
+            st = urllib.request.urlopen('https://status.github.com/api/last-message.json')
+            st = str(st.read())
+            st = st[2:]
+            st = st[:len(st) - 1]
+            st = ast.literal_eval(st)
+            status = st['status']
+            desc = st['body']
+            timestamp = st['created_on']
+        await self.bot.send_typing(ctx.message.channel)
+        class reddit_st:
+            st = urllib.request.urlopen('http://2kbc0d48tv3j.statuspage.io/api/v2/status.json')
+            st = str(st.read())
+            st = st[2:]
+            st = st[:len(st) - 1]
+            st = ast.literal_eval(st)
+            status = st['status']['indicator']
+            desc = st['status']['description']
+            timestamp = st['page']['updated_at']
+        await self.bot.send_typing(ctx.message.channel)
+        class hi_rez_st:
+            st = urllib.request.urlopen('http://stk4xr7r1y0r.statuspage.io/api/v2/status.json')
+            st = str(st.read())
+            st = st[2:]
+            st = st[:len(st) - 1]
+            st = ast.literal_eval(st)
+            status = st['status']['indicator']
+            desc = st['status']['description']
+            timestamp = st['page']['updated_at']
+        await self.bot.send_typing(ctx.message.channel)
+        embed.title = "Website Status"
+        embed.set_footer(text="StatusPage.io")
+        embed.add_field(name="Discord", value=discord_st.status)
+        embed.add_field(name="GitHub", value=github_st.status)
+        embed.add_field(name="Reddit", value=reddit_st.status)
+        embed.add_field(name="Hi-Rez Studios", value=hi_rez_st.status)
+        await self.bot.send_message(ctx.message.channel, embed=embed)
+
+    @status.command(pass_context=True)
     async def discord(self, ctx): # Discord Status
         """Shows Discord status (From https://status.discordapp.com)"""
         await self.bot.send_typing(ctx.message.channel)
