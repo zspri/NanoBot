@@ -119,7 +119,7 @@ class VoiceEntry:
         self.player = player
 
     def __str__(self):
-        fmt = '*{0.title}* by **{0.uploader}** ({0.download_url}) requested by {1.mention} '
+        fmt = '*{0.title}* by **{0.uploader}** requested by {1.mention} '
         duration = self.player.duration
         if duration:
             fmt = fmt + '`[length: {0[0]}m {0[1]}s]`'.format(divmod(duration, 60))
@@ -368,8 +368,7 @@ class Music:
 
     @commands.command(pass_context=True, no_pm=True)
     async def skip(self, ctx): # !!skip
-        """Vote to skip a song. The song requester can automatically skip.
-        3 skip votes are needed for the song to be skipped.
+        """Vote to skip a song.
         """
 
         state = self.get_voice_state(ctx.message.server)
@@ -378,17 +377,18 @@ class Music:
             return
 
         voter = ctx.message.author
+        users_in_channel = len(state.voice_channel.voice_members) - 1
         if voter == state.current.requester:
             await self.bot.say(':fast_forward: Skipping song...')
             state.skip()
         elif voter.id not in state.skip_votes:
             state.skip_votes.add(voter.id)
             total_votes = len(state.skip_votes)
-            if total_votes >= 3:
+            if total_votes >= users_in_channel:
                 await self.bot.say(':fast_forward: Skip vote passed, skipping song...')
                 state.skip()
             else:
-                await self.bot.say(':fast_forward: Skip vote added, currently at [{}/3]'.format(total_votes))
+                await self.bot.say(':fast_forward: Skip vote added, currently at [{}/{}]'.format(total_votes, users_in_channel))
         else:
             await self.bot.say(':warning: You have already voted to skip this song!')
 
