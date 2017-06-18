@@ -591,11 +591,9 @@ class Admin:
                 await self.bot.say(":warning: Failed to set status: `" + str(e)[:1900] + "`")
 
     @commands.command(pass_context=True, hidden=True)
-    async def sendmsg(self, ctx): # !!sendmsg
+    async def sendmsg(self, ctx, *, content : str): # !!sendmsg
         if str(ctx.message.author.id) in admin_ids:
-            f = open("msg.txt", "r")
-            await self.bot.say(f.read())
-            f.close()
+            await self.bot.say(content)
 
     @commands.command(pass_context=True, hidden=True)
     async def shutdown(self, ctx): # !!shutdown
