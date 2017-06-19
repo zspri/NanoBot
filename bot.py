@@ -28,6 +28,7 @@ import argparse
 import wmi
 import psutil
 import ctypes
+import concurrent.futures
 # import atexit
 
 colorama.init(autoreset=True)
@@ -70,7 +71,8 @@ admin_ids = ["247036033500315649", "233325229395410964", "236251438685093889", "
 songs_played = []
 start_time = None
 st_servers = None
-version = "1.3-beta"
+version = "1.4-beta"
+build = "14039"
 _uuid = uuid.uuid1()
 queue = {}
 disabled_cmds = {} # Format: {'command_name', 'reason'}
@@ -163,6 +165,8 @@ class VoiceState:
             try:
                 self.current.player.start()
                 await self.play_next_song.wait()
+            except concurrent.futures._base.CancelledError:
+                pass
             except Exception as e:
                 self.bot.say(exc_msg.format(e))
                 logging.error(str(e))
@@ -273,6 +277,12 @@ class Music:
         except OSError as e:
             logging.fatal(str(e))
             await bot.edit_message(tmp, ":gun: A fatal error occurred: `{0}: {1}` Please report this at https://discord.gg/eDRnXd6.".format(str(type(e).__name__), str(e)[:1900]))
+        except youtube_dl.utils.GeoRestrictedError:
+            await self.bot.edit_message(tmp, ":earth_americas: This video is not available in your region.")
+        except youtube_dl.utils.ExtractorError as e:
+            await self.bot.edit_message(tmp, ":warning: An error occurred while extracting video info: `{}`".format(str(e)))
+        except youtube_dl.utils.DownloadError as e:
+            await self.bot.edit_message(tmp, ":warning: An error occurred while downloading video: `{}`".format(str(e)))
         except Exception as e:
             e = str(e)
             logging.error(e)
@@ -285,7 +295,7 @@ class Music:
                 fmt = ':warning: The requested video could not be downloaded.'
             elif e.startswith("[WinError 6] The handle is invalid"):
                 fmt = ':warning: Access denied to video!'
-            await bot.edit_message(tmp, fmt)
+            await self.bot.edit_message(tmp, fmt)
         else:
             player.volume = 0.6
             try:
@@ -523,7 +533,7 @@ class Admin:
             err = 0
             embed = discord.Embed()
             try:
-                if "exit" in _eval.lower():
+                if "exit" in _eval.lower() or "token" in _eval.lower():
                     err = 1
                     res = "PermissionError: Request denied."
                 else:
@@ -1135,6 +1145,7 @@ async def on_ready():
     # atexit.register(os.system, "start bot.py")
 
 if __name__ == "__main__":
+    logging.info("NanoBot version {0} // build {1}".format(version, build))
     try:
         bot.run(os.getenv('NANOBOT_TOKEN'))
     except ConnectionResetError as e:
