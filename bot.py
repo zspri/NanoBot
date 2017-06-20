@@ -491,6 +491,13 @@ class Admin:
                 await self.bot.say(":warning: Command is not disabled!")
 
     @commands.command(pass_context=True, hidden=True)
+    async def say(self, ctx, *, mesg : str):
+        if str(ctx.message.author.id) in admin_ids:
+            await self.bot.say(mesg)
+            logging.debug("Said \"{}\"".format(mesg))
+            await self.bot.delete_message(ctx.message)
+
+    @commands.command(pass_context=True, hidden=True)
     async def eval(self, ctx, *, _eval : str): # !!eval
         if not str(ctx.message.author.id) in admin_ids:
             await self.bot.say(":no_entry_sign: You need to be **NanoBot Owner** to do that.")
