@@ -434,7 +434,7 @@ class Moderation:
         else:
             counter = 0
             msgs = []
-            await self.bot.say('Deleting messages... :clock2:')
+            await self.bot.send_typing(ctx.message.channel)
             try:
                 async for log in self.bot.logs_from(ctx.message.channel, limit=limit):
                     msgs.append(log)
@@ -452,7 +452,7 @@ class Moderation:
     async def prune2(self, ctx, *, messages : int): # !!prune2
         """Individually deletes the specified amount of messages."""
         counter = 0
-        await self.bot.say('Deleting messages... :clock2:')
+        await self.bot.send_typing(ctx.message.channel)
         try:
             async for log in self.bot.logs_from(ctx.message.channel, limit=messages):
                 await self.bot.delete_message(log)
