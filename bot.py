@@ -121,7 +121,7 @@ class VoiceEntry:
         self.player = player
 
     def __str__(self):
-        fmt = '*{0.title}* by **{0.uploader}** requested by {1.mention} '
+        fmt = '*{0.title}* by **{0.uploader}** requested by `{1.name}#{1.discriminator}` '
         duration = self.player.duration
         if duration:
             fmt = fmt + '`[length: {0[0]}m {0[1]}s]`'.format(divmod(duration, 60))
@@ -1092,7 +1092,7 @@ async def on_command_error(error, ctx): # When a command error occurrs
     if isinstance(error, discord.ext.commands.errors.CommandNotFound):
         pass
     if isinstance(error, discord.ext.commands.errors.CheckFailure):
-        await bot.send_message(ctx.message.channel, ":no_entry_sign: {}, you need to be a **NanoBot Mod** to use this command. For more help, see the docs: http://bot.nanomotion.xyz/docs".format(ctx.message.author.mention))
+        await bot.send_message(ctx.message.channel, ":no_entry_sign: {}, No permission! For more help, see the docs: http://bot.nanomotion.xyz/docs/permissons.md".format(ctx.message.author.mention))
     elif isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
         if ctx.command.name == "play":
             await bot.send_message(ctx.message.channel, ":warning: {}, `query/url` is a required argument that is missing.".format(ctx.message.author.mention))
