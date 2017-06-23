@@ -17,7 +17,7 @@ import uuid
 import sys
 import os
 from discord.ext import commands
-from apiclient.discovery import build
+from apiclient.discovery import build as gapibuild
 from apiclient.errors import HttpError
 from oauth2client.tools import argparser
 import colorama
@@ -660,18 +660,16 @@ class YouTube:
         self.bot = bot
 
     def search(q, max_results=10):
-        youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=DEVELOPER_KEY)
+        ytsearch = gapibuild(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=DEVELOPER_KEY)
+
 
         # Call the search.list method to retrieve results matching the specified
         # query term.
-        search_response = youtube.search().list(
-            q=q,
-            part="id,snippet",
-            maxResults=max_results
-        ).execute()
+        search_response = ytsearch.search().list(q=q, part="id,snippet", maxResults=max_results).execute()
+
 
         videos = []
-
+        
         # Add each result to the appropriate list, and then display the lists of
         # matching videos, channels, and playlists.
         for search_result in search_response.get("items", []):
@@ -701,7 +699,6 @@ class YouTube:
             embed.set_thumbnail(url=q['thumbnail'])
             embed.add_field(name="Description", value=q['description'][:1000])
             await self.bot.send_message(ctx.message.channel, embed=embed)
-            #await self.bot.say("https://youtube.com/watch?v=" + q['id'])
 
 class General:
 
@@ -775,11 +772,16 @@ class General:
     async def info(self, ctx): # !!info
         """Shows bot info."""
         global start_time
-        global version
         global errors
         global st_servers
         global proc_info
         await self.bot.send_typing(ctx.message.channel)
+        pyver = ""
+        for x in sys.version_info[0:3]:
+            if x == sys.version_info[2]:
+                pyver += str(x)
+            else:
+                pyver += str(x) + "."
         sysmem = psutil.virtual_memory()
         logging.debug("Got VM state")
         elapsed_time = time.gmtime(time.time() - start_time)
@@ -794,7 +796,7 @@ class General:
         embed.title = "NanoBot Status"
         embed.set_footer(text="NanoBot#2520")
         embed.set_thumbnail(url=ctx.message.server.me.avatar_url)
-        embed.add_field(name="Version", value="discord.py v" + str(discord.__version__) + "\nNanoBot v" + str(version))
+        embed.add_field(name="Version", value="discord.py {}\nPython {}".format(discord.__version__, pyver))
         embed.add_field(name="Commands Processed", value=str(len(cmds_this_session)))
         embed.add_field(name="Songs Played", value=str(len(songs_played)))
         embed.add_field(name="Uptime", value=stp)
@@ -1106,6 +1108,8 @@ async def on_command_error(error, ctx): # When a command error occurrs
             await bot.send_message(ctx.message.channel, ":warning: {}, `amount` is a required argument that is missing.".format(ctx.message.author.mention))
         else:
             await bot.send_message(ctx.message.channel, ":warning: {}, you are missing required arguments.".format(ctx.message.author.mention))
+    elif isinstance(error, TimeoutError):
+        pass
     elif isinstance(error, discord.ext.commands.errors.BadArgument):
         if ctx.command.name == "ping":
             await bot.send_message(ctx.message.channel, ":warning: {}, `times` is an optional argument that must be an int.".format(ctx.message.author.mention))
@@ -1120,8 +1124,7 @@ async def on_command_error(error, ctx): # When a command error occurrs
     else:
         if ctx.command:
             errors += 1
-            logging.error(error)
-            logging.error(traceback.format_exc())
+            logging.error(error.original)
             await bot.send_message(ctx.message.channel, ":gun: An error occured while processing this command: `{}`".format(error))
 
 @bot.event
