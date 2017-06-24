@@ -29,6 +29,7 @@ import wmi
 import psutil
 import ctypes
 import concurrent.futures
+import math
 # import atexit
 
 colorama.init(autoreset=True)
@@ -72,7 +73,7 @@ songs_played = []
 start_time = None
 st_servers = None
 version = "1.4-beta"
-build = "14039"
+build = "14045"
 _uuid = uuid.uuid1()
 queue = {}
 disabled_cmds = {} # Format: {'command_name', 'reason'}
@@ -529,7 +530,7 @@ class Admin:
                 embed.add_field(name=":outbox_tray: Error", value="```py\n" + str(res)[:900] + "```")
             else:
                 embed.add_field(name=":outbox_tray: Output", value="```py\n" + str(res)[:900] + "```")
-        await self.bot.send_message(ctx.message.channel, embed=embed)
+            await self.bot.send_message(ctx.message.channel, embed=embed)
 
     @commands.command(pass_context=True, hidden=True)
     async def exec(self, ctx, *, _eval : str): # !!exec
@@ -563,7 +564,7 @@ class Admin:
                 embed.add_field(name=":outbox_tray: Error", value="```py\n" + str(res)[:900] + "```")
             else:
                 embed.add_field(name=":outbox_tray: Output", value="```py\n" + str(res)[:900] + "```")
-        await self.bot.send_message(ctx.message.channel, embed=embed)
+            await self.bot.send_message(ctx.message.channel, embed=embed)
 
     @commands.command(pass_context=True, hidden=True)
     async def setplaying(self, ctx, *, game : str): # !!setplaying
@@ -669,7 +670,7 @@ class YouTube:
 
 
         videos = []
-        
+
         # Add each result to the appropriate list, and then display the lists of
         # matching videos, channels, and playlists.
         for search_result in search_response.get("items", []):
@@ -744,6 +745,21 @@ class General:
             embed.add_field(name="Playing", value="(Nothing)")
         embed.set_thumbnail(url=user.avatar_url)
         await self.bot.send_message(ctx.message.channel, embed=embed)
+
+    @commands.command(pass_context=True)
+    async def servers(self, ctx): # !!servers
+        incr = 0
+        max_incr = 25
+        for page in range(1, math.ceil(len(self.bot.servers) / 25) + 1): # 25 fields max in each embed
+            await self.bot.send_typing(ctx.message.channel)
+            embed = discord.Embed(color=ctx.message.server.me.color)
+            embed.title = "NanoBot Servers (Page {}/{})".format(str(page), str(math.ceil(len(self.bot.servers) / 25)))
+            embed.set_footer(text=ctx.message.author, icon_url=ctx.message.author.avatar_url)
+            for server in list(self.bot.servers)[incr:max_incr]:
+                embed.add_field(name=server.name, value="ID: {} / {} users".format(server.id, str(len(server.members))))
+            await self.bot.send_message(ctx.message.channel, embed=embed)
+            incr += 25
+            max_incr += 25
 
     @commands.command(pass_context=True)
     async def dog(self, ctx): # !!dog
@@ -1124,7 +1140,9 @@ async def on_command_error(error, ctx): # When a command error occurrs
     else:
         if ctx.command:
             errors += 1
+            _type, _value, _traceback = sys.exc_info()
             logging.error(error.original)
+            logging.error(_traceback)
             await bot.send_message(ctx.message.channel, ":gun: An error occured while processing this command: `{}`".format(error))
 
 @bot.event
