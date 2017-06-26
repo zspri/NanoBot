@@ -27,7 +27,7 @@ import timeit
 import argparse
 import wmi
 import psutil
-import ctypes
+from tkinter import messagebox
 import concurrent.futures
 import math
 # import atexit
@@ -39,16 +39,6 @@ class color:
     RED = colorama.Fore.WHITE + colorama.Back.RED
     GREEN = colorama.Fore.WHITE + colorama.Back.GREEN
     RESET = colorama.Style.RESET_ALL
-
-class mbopts:
-    OK = 0x0
-    OKCXL = 0x01
-    YESNOCXL = 0x03
-    YESNO = 0x04
-    HELP = 0x4000
-    ICON_EXLAIM = 0x30
-    ICON_INFO = 0x40
-    ICON_STOP = 0x10
 
 def queue_get_all(q):
     items = []
@@ -1213,4 +1203,4 @@ if __name__ == "__main__":
         pass
     except KeyboardInterrupt:
         pass
-    ctypes.windll.user32.MessageBoxA(0, "Bot exited at {}.".format(time.localtime(time.time())), "NanoBot", mbopts.ICON_EXLAIM)
+    messagebox.showwarning("NanoBot", "Bot exited at {}.".format(time.localtime(time.time())))
