@@ -712,7 +712,9 @@ class General:
         await self.bot.say(ctx.message.author.mention + ", you can invite me to your server with this link: http://bot.nanomotion.xyz/invite :wink:")
 
     @commands.command(pass_context=True, no_pm=True)
-    async def user(self, ctx, *, user : discord.User = ctx.message.author): # !!user
+    async def user(self, ctx, *, user : discord.User = None): # !!user
+        if user is None or user == None:
+            user = ctx.message.author
         """Gets the specified user's info."""
         await self.bot.send_typing(ctx.message.channel)
         stp = user.status
