@@ -7,6 +7,7 @@
 !!info - Shows basic NanoBot info
 !!user - Shows info about the requested user
 !!guild - Shows guild info
+!!servers - Shows NanoBot's servers
 !!ping - Pong!
 !!dog - http://random.dog
 !!cat - http://random.cat

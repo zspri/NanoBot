@@ -712,7 +712,7 @@ class General:
         await self.bot.say(ctx.message.author.mention + ", you can invite me to your server with this link: http://bot.nanomotion.xyz/invite :wink:")
 
     @commands.command(pass_context=True, no_pm=True)
-    async def user(self, ctx, *, user : discord.User): # !!user
+    async def user(self, ctx, *, user : discord.User = ctx.message.author): # !!user
         """Gets the specified user's info."""
         await self.bot.send_typing(ctx.message.channel)
         stp = user.status
@@ -754,35 +754,60 @@ class General:
             await self.bot.send_typing(ctx.message.channel)
             embed = discord.Embed(color=ctx.message.server.me.color)
             embed.title = "NanoBot Servers (Page {}/{})".format(str(page), str(math.ceil(len(self.bot.servers) / 25)))
-            embed.set_footer(text=ctx.message.author, icon_url=ctx.message.author.avatar_url)
+            embed.set_footer(text="Requested by **{}**".format(ctx.message.author), icon_url=ctx.message.author.avatar_url)
             for server in list(self.bot.servers)[incr:max_incr]:
                 embed.add_field(name=server.name, value="ID: {} / {} users".format(server.id, str(len(server.members))))
             await self.bot.send_message(ctx.message.channel, embed=embed)
             incr += 25
             max_incr += 25
 
-    @commands.command(pass_context=True)
-    async def dog(self, ctx): # !!dog
-        """Gets a random dog from http://random.dog"""
-        await self.bot.send_typing(ctx.message.channel)
+    def getdog():
         dog = urllib.request.urlopen('https://random.dog/woof')
         dog = str(dog.read())
         dog = dog[2:]
         dog = dog[:len(dog) - 1]
-        print("https://random.dog/" + str(dog))
-        await self.bot.say("Here is your random dog: https://random.dog/" + str(dog))
+        return dog
 
-    @commands.command(pass_context=True)
-    async def cat(self, ctx): # !!cat
-        """Gets a random cat from http://random.cat"""
-        await self.bot.send_typing(ctx.message.channel)
+    def getcat():
         cat = urllib.request.urlopen('https://random.cat/meow')
         cat = str(cat.read())
         cat = cat[11:]
         cat = cat[:len(cat) - 3]
         cat = cat.replace("\\", "")
+        return cat
+
+    @commands.command(pass_context=True)
+    async def dog(self, ctx): # !!dog
+        """Gets a random dog from http://random.dog"""
+        await self.bot.send_typing(ctx.message.channel)
+        embed = discord.Embed(color=ctx.message.server.me.color)
+        embed.title = "Random Dog"
+
+        dog = "null"
+        while 1:
+            dog = General.getdog()
+            if not dog.endswith(".mp4"):
+                break
+        print("https://random.dog/" + str(dog))
+        embed.set_footer(text="{}".format("http://random.dog/" + str(dog)))
+        embed.set_image(url="http://random.dog/" + str(dog))
+        await self.bot.send_message(ctx.message.channel, embed=embed)
+
+    @commands.command(pass_context=True)
+    async def cat(self, ctx): # !!cat
+        """Gets a random cat from http://random.cat"""
+        await self.bot.send_typing(ctx.message.channel)
+        embed = discord.Embed(color=ctx.message.server.me.color)
+        embed.title = "Random Cat"
+        cat = "null"
+        while 1:
+            cat = General.getcat()
+            if not cat.endswith(".mp4"):
+                break
         print(cat)
-        await self.bot.say("Here is your random cat: " + str(cat))
+        embed.set_footer(text="{}".format(str(cat)))
+        embed.set_image(url=str(cat))
+        await self.bot.send_message(ctx.message.channel, embed=embed)
 
     @commands.command(pass_context=True, no_pm=True, aliases=['botinfo'])
     async def info(self, ctx): # !!info
@@ -869,7 +894,7 @@ class General:
                 res = 0
                 for x in range(0, times):
                     try:
-                        res = urllib.request.urlopen('https://srhpyqt94yxb.statuspage.io/api/v2/summary.json', timeout=10)
+                        res = urllib.request.urlopen('https://gateway.discord.gg', timeout=10)
                         pg = res.read()
                     except Exception as e:
                         res.close()
@@ -889,7 +914,7 @@ class General:
                         embed = discord.Embed(color=discord.Color.red())
                         errors += 1
                     embed.title = "NanoBot Status"
-                    embed.add_field(name=":outbox_tray: Pong!", value="Connection took " + str(_time) + "ms")
+                    embed.add_field(name=":outbox_tray: Pong!", value="Round-trip took " + str(_time) + "ms")
                     embed.set_footer(text="bot.nanomotion.xyz/status")
                 else:
                     embed = discord.Embed(color=discord.Color.red())
