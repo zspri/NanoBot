@@ -45,16 +45,16 @@ class logger:
         logging.debug(msg)
     async def info(msg):
         logging.info(msg)
-        await bot.send_message(bot.get_channel(id="329608444728442881"), "```\n----- INFO -----\n\n{}```".format(msg))
+        await bot.send_message(bot.get_channel(id="329608444728442881"), "```\n----- INFO ({0.tm_hour}:{0.tm_min}.{0.tm_sec}) -----\n\n{1}```".format(time.localtime(time.time()), msg))
     async def warn(msg):
         logging.warn(msg)
-        await bot.send_message(bot.get_channel(id="329608444728442881"), "```\n----- WARNING -----\n\n{}```".format(msg))
+        await bot.send_message(bot.get_channel(id="329608444728442881"), "```\n----- WARNING ({0.tm_hour}:{0.tm_min}.{0.tm_sec}) -----\n\n{1}```".format(time.localtime(time.time()), msg))
     async def error(msg):
         logging.error(msg)
-        await bot.send_message(bot.get_channel(id="329608444728442881"), "```py\n----- ERROR -----\n\n{}```".format(msg))
+        await bot.send_message(bot.get_channel(id="329608444728442881"), "```py\n----- ERROR ({0.tm_hour}:{0.tm_min}.{0.tm_sec}) -----\n\n{1}```".format(time.localtime(time.time()), msg))
     async def fatal(msg):
         logging.fatal(msg)
-        await bot.send_message(bot.get_channel(id="329608444728442881"), "```py\n----- FATAL -----\n\n{}```".format(msg))
+        await bot.send_message(bot.get_channel(id="329608444728442881"), "```py\n----- FATAL ({0.tm_hour}:{0.tm_min}.{0.tm_sec}) -----\n\n{1}```".format(time.localtime(time.time()), msg))
 
 def queue_get_all(q):
     items = []
