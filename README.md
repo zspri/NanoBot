@@ -7,6 +7,10 @@ A music, fun, and moderation bot written in discord.py.
 
 Visit the bot website: http://bot.nanomotion.xyz
 
+Documentation: http://bot.nanomotion.xyz/docs
+
+NanoBot Status: http://bot.nanomotion.xyz/status
+
 Invite NanoBot to your Discord server: https://discordapp.com/oauth2/authorize?client_id=294210459144290305&scope=bot&permissions=2146958463
 
 View NanoBot on bots.discord.pw: https://bots.discord.pw/bots/294210459144290305
