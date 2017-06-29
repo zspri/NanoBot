@@ -87,6 +87,11 @@ def queue_get_all(q, m=10):
             items.append(q.get_nowait())
         except:
             break
+    for x in items:
+        try:
+            q.put_nowait(x)
+        except:
+            break
     return items
 
 active_reasons = {}
@@ -97,7 +102,7 @@ def memory():
     return int(result[0].WorkingSet)
 
 cmds_this_session = []
-admin_ids = ["247036033500315649", "233325229395410964", "236251438685093889", "294210459144290305", "233366211159785473"]
+admin_ids = ["233325229395410964", "236251438685093889", "294210459144290305", "233366211159785473"]
 songs_played = []
 start_time = None
 st_servers = None
@@ -324,8 +329,12 @@ class Music:
                 errors += 1
                 await self.bot.say(embed=embeds.fatal(str(e)))
             else:
-                await self.bot.say(':notes: Added ' + str(entry) + ' to the queue.')
-                await state.songs.put(entry)
+                try:
+                    await state.songs.put(entry)
+                    await self.bot.say(':notes: Added ' + str(entry) + ' to the queue.')
+                except asyncio.QueueFull:
+                    await self.bot.say(':no_entry_sign: You can only have 10 songs in queue at a time!')
+
 
     @commands.command(pass_context=True, no_pm=True)
     async def volume(self, ctx, value : int): # !!volume
@@ -424,7 +433,7 @@ class Music:
             await self.bot.say('Not playing anything. Type `!!play <query>` to play a song.')
         else:
             skip_count = len(state.skip_votes)
-            await self.bot.say('Now playing {} [skips: {}/3]'.format(state.current, skip_count))
+            await self.bot.say('Now playing {} [skips: {}]'.format(state.current, skip_count))
 
 class Moderation:
 
