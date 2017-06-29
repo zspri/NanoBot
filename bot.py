@@ -40,6 +40,27 @@ class color:
     GREEN = colorama.Fore.WHITE + colorama.Back.GREEN
     RESET = colorama.Style.RESET_ALL
 
+class embeds:
+    def fatal(error):
+        e = discord.Embed(color=discord.Color.red())
+        e.add_field(name="Fatal Error", value="Grats, you broke it.\n`{}`".format(error))
+        e.set_footer(text="Report this at https://discord.gg/eDRnXd6")
+        return e
+    def error(error):
+        e = discord.Embed(color=discord.Color.red())
+        e.add_field(name="Error", value="That didn't work out as planned.\n`{}`".format(error))
+        e.set_footer(text="Report this at https://discord.gg/eDRnXd6")
+        return e
+    def warning(message):
+        e = discord.Embed(color=discord.Color.gold())
+        e.add_field(name="Warning", value=message)
+        return e
+    def permission_denied(message="You don't have permission to do that."):
+        e = discord.Embed()
+        e.add_field(name="Permission Denied", value=message)
+        e.set_footer(text="Permissions reference: http://nanomotion.xyz/NanoBot/permissions.html")
+        return e
+
 class logger:
     def debug(msg):
         logging.debug(msg)
@@ -56,9 +77,9 @@ class logger:
         logging.fatal(msg)
         await bot.send_message(bot.get_channel(id="329608444728442881"), "```py\n----- FATAL ({0.tm_hour}:{0.tm_min}.{0.tm_sec}) -----\n\n{1}```".format(time.localtime(time.time()), msg))
 
-def queue_get_all(q):
+def queue_get_all(q, m=10):
     items = []
-    maxItemsToRetreive = 10
+    maxItemsToRetreive = m
     for numOfItemsRetrieved in range(0, maxItemsToRetreive):
         try:
             if numOfItemsRetrieved == maxItemsToRetreive:
@@ -67,6 +88,8 @@ def queue_get_all(q):
         except:
             break
     return items
+
+active_reasons = {}
 
 def memory():
     w = wmi.WMI('.')
@@ -173,7 +196,7 @@ class VoiceState:
             except concurrent.futures._base.CancelledError:
                 pass
             except Exception as e:
-                self.bot.say(exc_msg.format(e))
+                await self.bot.say(embed=embeds.error(str(e)))
                 await logger.error(str(e))
                 await logger.error(traceback.format_exc())
 
@@ -265,7 +288,7 @@ class Music:
         global songs_played
         global errors
         songs_played.append(song)
-        tmp = await bot.send_message(ctx.message.channel, ":clock2: Please wait...")
+        await self.bot.send_typing(ctx.message.channel)
         state = self.get_voice_state(ctx.message.server)
         opts = {
             'default_search': 'auto',
@@ -280,27 +303,18 @@ class Music:
         try:
             player = await state.voice.create_ytdl_player(song, ytdl_options=opts, after=state.toggle_next, before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5")
         except OSError as e:
+            errors += 1
             await logger.fatal(str(e))
-            await bot.edit_message(tmp, ":gun: A fatal error occurred: `{0}: {1}` Please report this at https://discord.gg/eDRnXd6.".format(str(type(e).__name__), str(e)[:1900]))
+            await self.bot.say(embed=embeds.fatal(str(e)))
         except youtube_dl.utils.GeoRestrictedError:
-            await self.bot.edit_message(tmp, ":earth_americas: This video is not available in your region.")
-        except youtube_dl.utils.ExtractorError as e:
-            await self.bot.edit_message(tmp, ":warning: An error occurred while extracting video info: `{}`".format(str(e)))
-        except youtube_dl.utils.DownloadError as e:
-            await self.bot.edit_message(tmp, ":warning: An error occurred while downloading video: `{}`".format(str(e)))
+            errors += 1
+            await self.bot.say(":earth_americas: This video is not available in your region.")
         except Exception as e:
             e = str(e)
+            errors += 1
             await logger.error(e)
             await logger.error(traceback.format_exc())
-            errors += 1
-            fmt = ':warning: An error occurred: ```py\n' + e[:1900] + '\n```'
-            if e.startswith("ERROR: Unsupported URL") or e.startswith("hostname"):
-                fmt = ':warning: That URL is not supported. Visit https://goo.gl/5yKXrN for a list of supported sites.'
-            elif e.startswith("ERROR: Unable to download webpage") or e.startswith("ERROR: Incomplete"):
-                fmt = ':warning: The requested video could not be downloaded.'
-            elif e.startswith("[WinError 6] The handle is invalid"):
-                fmt = ':warning: Access denied to video!'
-            await self.bot.edit_message(tmp, fmt)
+            await self.bot.say(embed=embeds.error(e))
         else:
             player.volume = 0.6
             try:
@@ -308,9 +322,9 @@ class Music:
             except Exception as e:
                 await logger.error(str(e))
                 errors += 1
-                await bot.edit_message(tmp, ':gun: A fatal error occurred: `{}`'.format(str(e)[:1900]))
+                await self.bot.say(embed=embeds.fatal(str(e)))
             else:
-                await bot.edit_message(tmp, ':notes: Added ' + str(entry) + ' to the queue.')
+                await self.bot.say(':notes: Added ' + str(entry) + ' to the queue.')
                 await state.songs.put(entry)
 
     @commands.command(pass_context=True, no_pm=True)
@@ -448,7 +462,7 @@ class Moderation:
             except Exception as e:
                 errors += 1
                 await logger.error(str(e))
-                await self.bot.say(exc_msg.format(traceback.format_exc()))
+                await self.bot.say(embed=embeds.error(str(e)))
             else:
                 await self.bot.say(':zap: Deleted {} messages.'.format(counter))
 
@@ -465,35 +479,23 @@ class Moderation:
         except Exception as e:
             errors += 1
             await logger.error(str(e))
-            await self.bot.send_message(ctx.message.channel, exc_msg.format(e))
+            await self.bot.say(embed=embeds.error(str(e)))
         else:
             await self.bot.send_message(ctx.message.channel, 'Deleted {} messages.'.format(counter))
+
+    @commands.command(pass_context=True)
+    @commands.check(ismod)
+    async def reason(self, ctx, *, reason : str): # !!reason
+        global active_reasons
+        res = active_reasons
+        await self.bot.edit_message(res['message'], "**User Banned**\nMember: {0}\nResponsible moderator: {1}\nReason: {2}".format(res['member'], ctx.message.author, reason))
+        del active_reasons[str(case)]
+        await self.bot.say(":ok_hand:")
 
 class Admin:
 
     def __init__(self, bot):
         self.bot = bot
-
-    @commands.command(pass_context=True, hidden=True)
-    async def disable(self, ctx, *, cmd_name : str, reason : str = "Command disabled"): # !!disable
-        global disabled_cmds
-        if not str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(":no_entry_sign: You need to be **NanoBot Owner** to do that.")
-        else:
-            disabled_cmds[cmd_name] = reason
-            await self.bot.say("Disabled command **!!{}** with reason `{}`.".format(cmd_name, reason))
-
-    @commands.command(pass_context=True, hidden=True)
-    async def enable(self, ctx, *, cmd_name : str): # !!enable
-        global disabled_cmds
-        if not str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(":no_entry_sign: You need to be **NanoBot Owner** to do that.")
-        else:
-            try:
-                disabled_cmds.pop(cmd_name)
-                await self.bot.say("Enabled command **!!{}**".format(cmd_name))
-            except KeyError:
-                await self.bot.say(":warning: Command is not disabled!")
 
     @commands.command(pass_context=True, hidden=True)
     async def say(self, ctx, *, mesg : str):
@@ -505,7 +507,7 @@ class Admin:
     @commands.command(pass_context=True, hidden=True)
     async def eval(self, ctx, *, _eval : str): # !!eval
         if not str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(":no_entry_sign: You need to be **NanoBot Owner** to do that.")
+            await self.bot.say(embed=embeds.permission_denied())
         else:
             res = "null"
             err = 0
@@ -521,9 +523,9 @@ class Admin:
                 res = str(e)
                 err = 1
             if err == 1:
-                embed = discord.Embed(color=0xFF0000)
+                embed = discord.Embed(color=discord.Color.red())
             else:
-                embed = discord.Embed(color=0x00FF00)
+                embed = discord.Embed(color=discord.Color.green())
             if len(str(res)) > 899:
                 res = str(res)[:880] + "\n\n(result trimmed)"
             embed.title = "NanoBot Eval"
@@ -539,7 +541,7 @@ class Admin:
     @commands.command(pass_context=True, hidden=True)
     async def exec(self, ctx, *, _eval : str): # !!exec
         if not str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(":no_entry_sign: You need to be **NanoBot Owner** to do that.")
+            await self.bot.say(embed=embeds.permission_denied())
         else:
             res = "null"
             err = 0
@@ -555,9 +557,9 @@ class Admin:
                 res = str(e)
                 err = 1
             if err == 1:
-                embed = discord.Embed(color=0xFF0000)
+                embed = discord.Embed(color=discord.Color.red())
             else:
-                embed = discord.Embed(color=0x00FF00)
+                embed = discord.Embed(color=discord.Color.green())
             if len(str(res)) > 899:
                 res = str(res)[:880] + "\n\n(result trimmed)"
             embed.title = "NanoBot Exec"
@@ -573,19 +575,19 @@ class Admin:
     @commands.command(pass_context=True, hidden=True)
     async def setplaying(self, ctx, *, game : str): # !!setplaying
         if not str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(":no_entry_sign: You need to be **NanoBot Owner** to do that.")
+            await self.bot.say(embed=embeds.permission_denied())
         else:
             try:
                 await self.bot.change_presence(game=discord.Game(name=game))
                 await logger.info("Set game to " + str(game))
             except Exception as e:
-                await self.bot.say(":warning: Failed to set playing: `" + str(e)[:1900] + "`")
+                await self.bot.say(embed=embeds.error("Failed to set game: {}".format(str(e))))
 
     @commands.command(pass_context=True, hidden=True)
     async def reload(self, ctx, *, module : str): # !!reload
         global errors
         if not str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(":no_entry_sign: You need to be **NanoBot Owner** to do that.")
+            await self.bot.say(embed=embeds.permission_denied())
         else:
             try:
                 await logger.info('Reloading ' + module + '...')
@@ -594,14 +596,14 @@ class Admin:
                 await logger.info('Successfully reloaded ' + module)
             except Exception as e:
                 errors += 1
-                await self.bot.say(':warning: Failed to reload module: `' + str(e) + '`')
+                await self.bot.say(embed=embeds.error(str(e)))
                 await logger.warn('Failed to reload ' + module)
 
     @commands.command(pass_context=True, hidden=True)
     async def setstatus(self, ctx, *, status : str): # !!setstatus
         global errors
         if not str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(":no_entry_sign: You need to be **NanoBot Owner** to do that.")
+            await self.bot.say(embed=embeds.permission_denied())
         else:
             try:
                 if status == "online":
@@ -624,12 +626,7 @@ class Admin:
                 await logger.info("Set status to " + str(status))
             except Exception as e:
                 errors += 1
-                await self.bot.say(":warning: Failed to set status: `" + str(e)[:1900] + "`")
-
-    @commands.command(pass_context=True, hidden=True)
-    async def sendmsg(self, ctx, *, content : str): # !!sendmsg
-        if str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(content)
+                await self.bot.say(embed=embeds.error(str(e)))
 
     @commands.command(pass_context=True, hidden=True)
     async def shutdown(self, ctx): # !!shutdown
@@ -705,7 +702,7 @@ class YouTube:
         except HttpError as e:
             errors += 1
             await logger.error(str(e))
-            await self.bot.say(":warning: Error `{status}` occurred: ```json\n{content}\n```".format(status=e.resp.status, content=e.content))
+            await self.bot.say(embed=embeds.error(str(e)))
         else:
             q = q[0]
             embed = discord.Embed(color=discord.Color.red())
@@ -725,7 +722,7 @@ class General:
     @commands.command(pass_context=True)
     async def invite(self, ctx): # !!invite
         """Shows a link to invite NanoBot to your server."""
-        await self.bot.say(ctx.message.author.mention + ", you can invite me to your server with this link: http://bot.nanomotion.xyz/invite :wink:")
+        await self.bot.say(ctx.message.author.mention + ", you can invite me to a server with this link: http://bot.nanomotion.xyz/invite :wink:")
 
     @commands.command(pass_context=True, no_pm=True)
     async def user(self, ctx, *, user : discord.User = None): # !!user
@@ -865,7 +862,7 @@ class General:
         embed.add_field(name="Used Memory", value=mem)
         embed.add_field(name="Processor Info", value='`' + proc_info + '`')
         embed.add_field(name="Voice Sessions", value=str(len(self.bot.voice_clients)))
-        await logger.debug("Created Embed")
+        logger.debug("Created Embed")
         await self.bot.send_message(ctx.message.channel, embed=embed)
 
     @commands.command(pass_context=True, no_pm=True, aliases=['server', 'guildinfo', 'serverinfo'])
@@ -902,10 +899,10 @@ class General:
         try:
             times = int(times)
         except:
-            await self.bot.say(":warning: Times is an optional argument that must be an `int`.")
+            await self.bot.say(embed=embeds.error("Argument 'times' must be an int"))
         else:
             if times > 1 and not str(ctx.message.author.id) in admin_ids:
-                await self.bot.say(":warning: You need to be **NanoBot Owner** to ping multiple times.")
+                await self.bot.say(embed=embeds.permission_denied())
             else:
                 await self.bot.send_typing(ctx.message.channel)
                 start = time.time()
@@ -1133,26 +1130,6 @@ bot.add_cog(General(bot))
 bot.add_cog(YouTube(bot))
 bot.add_cog(Status(bot))
 
-'''class LogHandler(logging.StreamHandler):
-    async def emit(self, record):
-        try:
-            msg = self.format(record)
-            stream = self.stream
-            same_line = hasattr(record, 'same_line')
-            if self.on_same_line and not same_line:
-                stream.write(self.terminator)
-            stream.write(msg)
-            await bot.send_message(bot.get_channel(id="329608444728442881"), msg)
-            stream.write(self.terminator)
-            self.flush()
-        except (KeyboardInterrupt, SystemExit):
-            raise
-        except:
-            self.handleError(record)
-
-loggingHandler = LogHandler()
-await logger.addHandler(loggingHandler)'''
-
 @bot.event
 async def on_server_join(server): # When the bot joins a server
     print(color.GREEN + "Joined server " + str(server.id)+ " (" + str(server.name) + ")")
@@ -1160,7 +1137,7 @@ async def on_server_join(server): # When the bot joins a server
     await bot.send_message(server.default_channel, ':wave: Hi, I\'m NanoBot! Thanks for adding me to your server. Type `!!help` for help and tips on what I can do.')
 
 @bot.event
-async def on_server_leave(server): # When the bot leaves a server
+async def on_server_remove(server): # When the bot leaves a server
     print(color.RED + "Left server " + str(server.id) + " (" + str(server.name) + ")")
     await logger.info("Left server {0.name} (ID: `{0.id}`)".format(server))
 
@@ -1170,39 +1147,35 @@ async def on_member_join(member): # When a member joins a server
         await bot.send_message(member.server.get_channel("314136139755945984"), ":wave: Welcome " + str(member.mention) + " to the server!")
 
 @bot.event
+async def on_member_ban(member): # When a member is banned
+    global active_reasons
+    if str(member.server.id) == "311611939195322369":
+        tmp = await bot.send_message(member.server.get_channel("329685683608485889"), "**User Banned**\nMember: {0}\nResponsible moderator: *Unknown*\nReason: *Type !!reason <reason>*".format(member, len(active_reasons) + 1))
+        active_reasons = {"message":tmp, "member":member}
+
+@bot.event
 async def on_command_error(error, ctx): # When a command error occurrs
     global exc_msg
     global errors
     if isinstance(error, discord.ext.commands.errors.CommandNotFound):
         pass
     if isinstance(error, discord.ext.commands.errors.CheckFailure):
-        await bot.send_message(ctx.message.channel, ":no_entry_sign: {}, No permission! For more help, see the docs: http://bot.nanomotion.xyz/docs/permissons.md".format(ctx.message.author.mention))
+        await bot.send_message(ctx.message.channel, embed=embeds.permission_denied())
     elif isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
-        if ctx.command.name == "play":
-            await bot.send_message(ctx.message.channel, ":warning: {}, `query/url` is a required argument that is missing.".format(ctx.message.author.mention))
-        elif ctx.command.name == "join":
-            await bot.send_message(ctx.message.channel, ":warning: {}, `channel` is a required argument that is missing.".format(ctx.message.author.mention))
-        elif ctx.command.name == "yt":
-            await bot.send_message(ctx.message.channel, ":warning: {}, `query` is a required argument that is missing.".format(ctx.message.author.mention))
-        elif ctx.command.name == "volume":
-            await bot.send_message(ctx.message.channel, ":warning: {}, `volume` is a required argument that is missing.".format(ctx.message.author.mention))
-        elif ctx.command.name == "prune" or ctx.command.name == "prune2":
-            await bot.send_message(ctx.message.channel, ":warning: {}, `amount` is a required argument that is missing.".format(ctx.message.author.mention))
-        else:
-            await bot.send_message(ctx.message.channel, ":warning: {}, you are missing required arguments.".format(ctx.message.author.mention))
+        await bot.send_message(ctx.message.channel, embed=embeds.error("You're missing required arguments!"))
     elif isinstance(error, TimeoutError):
         pass
     elif isinstance(error, discord.ext.commands.errors.BadArgument):
         if ctx.command.name == "ping":
-            await bot.send_message(ctx.message.channel, ":warning: {}, `times` is an optional argument that must be an int.".format(ctx.message.author.mention))
+            await bot.send_message(ctx.message.channel, embed=embeds.error("'times' must be an int."))
         elif ctx.command.name == "status":
-            await bot.send_message(ctx.message.channel, ":warning: {}, That is not a valid subcommmand. Type `!!status help` for help.".format(ctx.message.author.mention))
+            await bot.send_message(ctx.message.channel, embed=embeds.error("That isn't a valid subcommand. Try typing '!!status help' for help."))
         else:
-            await bot.send_message(ctx.message.channel, ":warning: {}, you passed an invalid argument.".format(ctx.message.author.mention))
+            await bot.send_message(ctx.message.channel, embed=embeds.error("Invalid argument!"))
     elif isinstance(error, discord.errors.Forbidden) or isinstance(error, discord.Forbidden):
         pass
     elif isinstance(error, discord.ext.commands.errors.NoPrivateMessage):
-        await bot.send_message(ctx.message.channel, ":no_entry_sign: This command can't be used in private messages.")
+        await bot.send_message(ctx.message.channel, embed=embeds.error("This command can't be used in private messages."))
     else:
         if ctx.command:
             errors += 1
@@ -1210,7 +1183,7 @@ async def on_command_error(error, ctx): # When a command error occurrs
             await logger.error(error.original)
             if _traceback is not None:
                 await logger.error(_traceback)
-            await bot.send_message(ctx.message.channel, ":gun: An error occured while processing this command: `{}`".format(error))
+            await bot.send_message(ctx.message.channel, embed=embeds.error(error))
 
 @bot.event
 async def on_message(message): # When a message is sent
