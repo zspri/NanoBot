@@ -94,15 +94,13 @@ def queue_get_all(q, m=10):
             break
     return items
 
-active_reasons = {}
-
 def memory():
     w = wmi.WMI('.')
     result = w.query("SELECT WorkingSet FROM Win32_PerfRawData_PerfProc_Process WHERE IDProcess=%d" % os.getpid())
     return int(result[0].WorkingSet)
 
 cmds_this_session = []
-admin_ids = ["233325229395410964", "236251438685093889", "294210459144290305", "233366211159785473"]
+admin_ids = ["233325229395410964", "236251438685093889", "294210459144290305", "233366211159785473", "221056873548218378"]
 songs_played = []
 start_time = None
 st_servers = None
