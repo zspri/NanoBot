@@ -1,6 +1,6 @@
 ##########################################
 # NanoBot                                #
-# Version 1.3-beta                       #
+# Version 1.6-beta                       #
 # Copyright (c) Nanomotion, 2017         #
 # See the LICENSE.txt file for more info #
 ##########################################
@@ -55,6 +55,10 @@ class embeds:
         e = discord.Embed(color=discord.Color.gold())
         e.add_field(name="Warning", value=message)
         return e
+    def invalid_syntax(message="You entered that command wrong."):
+        e = discord.Embed()
+        e.add_field(name="Syntax Error", value=message)
+        e.set_footer(text="Commands reference: http://nanomotion.xyz/NanoBot/commands.html")
     def permission_denied(message="You don't have permission to do that."):
         e = discord.Embed()
         e.add_field(name="Permission Denied", value=message)
@@ -104,8 +108,8 @@ admin_ids = ["233325229395410964", "236251438685093889", "294210459144290305", "
 songs_played = []
 start_time = None
 st_servers = None
-version = "1.5-beta"
-build = "15050"
+version = "1.6-beta"
+build = "16058"
 _uuid = uuid.uuid1()
 queue = {}
 disabled_cmds = {} # Format: {'command_name', 'reason'}
@@ -237,42 +241,40 @@ class Music:
                 pass
 
     @commands.command(pass_context=True, no_pm=True)
-    async def join(self, ctx, *, channel : discord.Channel): # !!join
+    async def join(self, ctx, *, channel : discord.Channel = None): # !!join
         global errors
+        if channel is None:
+            channel = ctx.message.author.voice_channel
         """Joins a voice channel."""
-        tmp = await bot.send_message(ctx.message.channel, ":clock2: Connecting to voice channel `" + str(channel.name) + "`...")
+        await self.bot.send_typing(ctx.message.channel)
         try:
             await self.create_voice_client(channel)
         except discord.errors.ClientException:
-            await self.bot.edit_message(tmp, ':no_entry_sign: Already in a voice channel!')
+            await self.bot.say(embed=embeds.error("Already in a voice channel!"))
         except TimeoutError:
-            await self.bot.edit_message(tmp, ':no_entry_sign: Connection timed out.')
-            errors += 1
+            await self.bot.say(embed=embeds.error("Connection timed out."))
         except discord.errors.Forbidden:
-            await self.bot.edit_message(tmp, ':no_entry_sign: I don\'t have permission to join that channel!')
+            await self.bot.say(embed=embeds.error("I don't have permission to join that voice channel!"))
         except discord.errors.InvalidArgument:
-            await self.bot.edit_message(tmp, ':no_entry_sign: Not a valid voice channel!')
+            await self.bot.say(embed=embeds.invalid_syntax("{} is not a valid voice channel.".format(ctx.message.author.voice_channel)))
         except Exception as e:
             await logger.error(str(e))
-            await self.bot.edit_message(tmp, ':no_entry_sign: Couldn\'t connect to voice channel.')
+            await self.bot.say(embed=embeds.error("I couldn't connect to that voice channel."))
             errors += 1
         else:
-            await self.bot.edit_message(tmp, ':notes: Ready to play audio in `' + channel.name + '`')
+            await self.bot.say(':notes: Ready to play audio in `' + channel.name + '`')
 
     @commands.command(pass_context=True, no_pm=True)
     async def summon(self, ctx): # !!summon
         """Summons the bot to join your voice channel."""
         summoned_channel = ctx.message.author.voice_channel
-        tmp = await self.bot.send_message(ctx.message.channel, ":clock2: Please wait...")
+        await self.bot.send_typing(ctx.message.channel)
         if summoned_channel is None:
-            await self.bot.edit_message(tmp, ':no_entry_sign: You are not in a voice channel!')
+            await self.bot.say(embed=embeds.error("You aren't in a voice channel!"))
             return False
-        else:
-            tmp = await bot.edit_message(tmp, ":clock2: Connecting to voice channel `" + str(summoned_channel.name) + "`...")
-
         state = self.get_voice_state(ctx.message.server)
         if state.voice is None:
-            await bot.edit_message(tmp, ":notes: Ready to play music in `" + str(summoned_channel.name) + "`!")
+            await self.bot.say(":notes: Ready to play music in `" + str(summoned_channel.name) + "`!")
             state.voice = await self.bot.join_voice_channel(summoned_channel)
         else:
             await state.voice.move_to(summoned_channel)
@@ -310,8 +312,10 @@ class Music:
             await logger.fatal(str(e))
             await self.bot.say(embed=embeds.fatal(str(e)))
         except youtube_dl.utils.GeoRestrictedError:
+            await self.bot.say(embed=errors.error("This video is not available in your country."))
+        except youtube_dl.utils.DownloadError as e:
             errors += 1
-            await self.bot.say(":earth_americas: This video is not available in your region.")
+            await self.bot.say("An error occurred while downloading this video: {}".format(str(e)))
         except Exception as e:
             e = str(e)
             errors += 1
@@ -350,7 +354,7 @@ class Music:
         if state.is_playing():
             player = state.player
             player.pause()
-            await self.bot.say(":pause_button: Paused the player.")
+            await self.bot.say(":pause_button: Paused the player. Use `!!resume` to resume the player.")
 
     @commands.command(pass_context=True, no_pm=True)
     async def queue(self, ctx): # !!queue
@@ -381,7 +385,6 @@ class Music:
         """Stops playing audio and leaves the voice channel.
         This also clears the queue.
         """
-        await self.bot.say(":octagonal_sign: Stopped the player. Leaving the voice channel...")
         server = ctx.message.server
         state = self.get_voice_state(server)
 
@@ -478,6 +481,8 @@ class Moderation:
     async def prune2(self, ctx, *, messages : int): # !!prune2
         """Individually deletes the specified amount of messages."""
         counter = 0
+        await self.bot.say(embed=embeds.warning("This command is deprecated and will be removed in a future release. Resuming in 5 seconds"))
+        await asyncio.sleep(5)
         await self.bot.send_typing(ctx.message.channel)
         try:
             async for log in self.bot.logs_from(ctx.message.channel, limit=messages):
@@ -489,15 +494,6 @@ class Moderation:
             await self.bot.say(embed=embeds.error(str(e)))
         else:
             await self.bot.send_message(ctx.message.channel, 'Deleted {} messages.'.format(counter))
-
-    @commands.command(pass_context=True)
-    @commands.check(ismod)
-    async def reason(self, ctx, *, reason : str): # !!reason
-        global active_reasons
-        res = active_reasons
-        await self.bot.edit_message(res['message'], "**User Banned**\nMember: {0}\nResponsible moderator: {1}\nReason: {2}".format(res['member'], ctx.message.author, reason))
-        del active_reasons[str(case)]
-        await self.bot.say(":ok_hand:")
 
 class Admin:
 
@@ -771,15 +767,20 @@ class General:
     @commands.command(pass_context=True)
     async def servers(self, ctx): # !!servers
         incr = 0
+        percent = 0
         max_incr = 25
+        tot_users = sum(1 for _ in self.bot.get_all_members())
         for page in range(1, math.ceil(len(self.bot.servers) / 25) + 1): # 25 fields max in each embed
             await self.bot.send_typing(ctx.message.channel)
             embed = discord.Embed(color=ctx.message.server.me.color)
             embed.title = "NanoBot Servers (Page {}/{})".format(str(page), str(math.ceil(len(self.bot.servers) / 25)))
-            embed.set_footer(text="Requested by **{}**".format(ctx.message.author), icon_url=ctx.message.author.avatar_url)
+            embed.set_footer(text="Requested by {}".format(ctx.message.author), icon_url=ctx.message.author.avatar_url)
             for server in list(self.bot.servers)[incr:max_incr]:
-                embed.add_field(name=server.name, value="ID: {} / {} users".format(server.id, str(len(server.members))))
+                this_percent = (len(server.members) / tot_users) * 100
+                percent += this_percent
+                embed.add_field(name=server.name, value="ID: {} / {} users ({}%)".format(server.id, str(len(server.members)), str(this_percent)))
             await self.bot.send_message(ctx.message.channel, embed=embed)
+            logging.info("Added up to {}% of users".format(str(percent)))
             incr += 25
             max_incr += 25
 
@@ -845,13 +846,13 @@ class General:
                 pyver += str(x)
             else:
                 pyver += str(x) + "."
-        sysmem = psutil.virtual_memory()
+        #sysmem = psutil.virtual_memory()
         logging.debug("Got VM state")
         elapsed_time = time.gmtime(time.time() - start_time)
         logging.debug("Got bot uptime")
         stp = str(elapsed_time[7] - 1) + " days, " + str(elapsed_time[3]) + " hours, " + str(elapsed_time[4]) + " minutes"
         logging.debug("Formatted bot uptime")
-        mem = str(memory() / 1000000) + " / " + str(sysmem.total / 1000000) + " MB"
+        #mem = str(memory() / 1000000) + " / " + str(sysmem.total / 1000000) + " MB"
         logging.debug("Formatted VM")
         users = sum(1 for _ in self.bot.get_all_members())
         logging.debug("Got all bot users")
@@ -866,7 +867,7 @@ class General:
         embed.add_field(name="Errors", value=str(errors) + " (" + str(round(errors/len(cmds_this_session) * 100)) + "%)")
         embed.add_field(name="Servers", value=str(len(self.bot.servers)))
         embed.add_field(name="Users", value=str(users))
-        embed.add_field(name="Used Memory", value=mem)
+        #embed.add_field(name="Used Memory", value=mem)
         embed.add_field(name="Processor Info", value='`' + proc_info + '`')
         embed.add_field(name="Voice Sessions", value=str(len(self.bot.voice_clients)))
         logger.debug("Created Embed")
@@ -1169,16 +1170,16 @@ async def on_command_error(error, ctx): # When a command error occurrs
     if isinstance(error, discord.ext.commands.errors.CheckFailure):
         await bot.send_message(ctx.message.channel, embed=embeds.permission_denied())
     elif isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
-        await bot.send_message(ctx.message.channel, embed=embeds.error("You're missing required arguments!"))
+        await bot.send_message(ctx.message.channel, embed=embeds.invalid_syntax("You're missing required arguments!"))
     elif isinstance(error, TimeoutError):
         pass
     elif isinstance(error, discord.ext.commands.errors.BadArgument):
         if ctx.command.name == "ping":
-            await bot.send_message(ctx.message.channel, embed=embeds.error("'times' must be an int."))
+            await bot.send_message(ctx.message.channel, embed=embeds.invalid_syntax("'times' must be an int."))
         elif ctx.command.name == "status":
-            await bot.send_message(ctx.message.channel, embed=embeds.error("That isn't a valid subcommand. Try typing '!!status help' for help."))
+            await bot.send_message(ctx.message.channel, embed=embeds.invalid_syntax("That isn't a valid subcommand. Try typing '!!status help' for help."))
         else:
-            await bot.send_message(ctx.message.channel, embed=embeds.error("Invalid argument!"))
+            await bot.send_message(ctx.message.channel, embed=embeds.invalid_syntax("Invalid argument!"))
     elif isinstance(error, discord.errors.Forbidden) or isinstance(error, discord.Forbidden):
         pass
     elif isinstance(error, discord.ext.commands.errors.NoPrivateMessage):
