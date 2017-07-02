@@ -32,6 +32,23 @@ import concurrent.futures
 import math
 # import atexit
 
+cmds_this_session = []
+admin_ids = ["233325229395410964", "236251438685093889", "294210459144290305", "233366211159785473", "221056873548218378"]
+songs_played = []
+start_time = None
+st_servers = None
+version = "1.6-beta"
+build = "16060"
+_uuid = uuid.uuid1()
+queue = {}
+disabled_cmds = {} # Format: {'command_name', 'reason'}
+errors = 0
+exc_msg = ":warning: An error occurred:\n```py\n{}\n```\nNeed help? Join the NanoBot support server at https://discord.gg/eDRnXd6"
+DEVELOPER_KEY = str(os.getenv('GAPI_TOKEN'))
+YOUTUBE_API_SERVICE_NAME = "youtube"
+YOUTUBE_API_VERSION = "v3"
+proc_info = os.getenv('PROCESSOR_IDENTIFIER')
+
 colorama.init(autoreset=True)
 class color:
     BLUE = colorama.Fore.WHITE + colorama.Back.BLUE
@@ -102,23 +119,6 @@ def memory():
     w = wmi.WMI('.')
     result = w.query("SELECT WorkingSet FROM Win32_PerfRawData_PerfProc_Process WHERE IDProcess=%d" % os.getpid())
     return int(result[0].WorkingSet)
-
-cmds_this_session = []
-admin_ids = ["233325229395410964", "236251438685093889", "294210459144290305", "233366211159785473", "221056873548218378"]
-songs_played = []
-start_time = None
-st_servers = None
-version = "1.6-beta"
-build = "16058"
-_uuid = uuid.uuid1()
-queue = {}
-disabled_cmds = {} # Format: {'command_name', 'reason'}
-errors = 0
-exc_msg = ":warning: An error occurred:\n```py\n{}\n```\nNeed help? Join the NanoBot support server at https://discord.gg/eDRnXd6"
-DEVELOPER_KEY = str(os.getenv('GAPI_TOKEN'))
-YOUTUBE_API_SERVICE_NAME = "youtube"
-YOUTUBE_API_VERSION = "v3"
-proc_info = os.getenv('PROCESSOR_IDENTIFIER')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -804,7 +804,7 @@ class General:
         max_incr = 25
         tot_users = sum(1 for _ in self.bot.get_all_members())
         for page in range(1, math.ceil(len(self.bot.servers) / 25) + 1): # 25 fields max in each embed
-            await self.bot.send_typing(ctx.message.channel)
+            await self.bot.send_typing(ctx.message.author)
             embed = discord.Embed(color=ctx.message.server.me.color)
             embed.title = "NanoBot Servers (Page {}/{})".format(str(page), str(math.ceil(len(self.bot.servers) / 25)))
             embed.set_footer(text="{} servers / {} users".format(self.bot.servers, tot_users), icon_url=ctx.message.author.avatar_url)
