@@ -55,9 +55,9 @@ class embeds:
         e = discord.Embed(color=discord.Color.gold())
         e.add_field(name="Warning", value=message)
         return e
-    def invalid_syntax(message="You entered that command wrong."):
+    def invalid_syntax(message="You entered something wrong."):
         e = discord.Embed()
-        e.add_field(name="Syntax Error", value=message)
+        e.add_field(name="Invalid Syntax", value=message)
         e.set_footer(text="Commands reference: http://nanomotion.xyz/NanoBot/commands.html")
     def permission_denied(message="You don't have permission to do that."):
         e = discord.Embed()
@@ -70,16 +70,16 @@ class logger:
         logging.debug(msg)
     async def info(msg):
         logging.info(msg)
-        await bot.send_message(bot.get_channel(id="329608444728442881"), "```\n----- INFO ({0.tm_hour}:{0.tm_min}.{0.tm_sec}) -----\n\n{1}```".format(time.localtime(time.time()), msg))
+        #await bot.send_message(bot.get_channel(id="329608444728442881"), "```\n----- INFO ({0.tm_hour}:{0.tm_min}.{0.tm_sec}) -----\n\n{1}```".format(time.localtime(time.time()), msg))
     async def warn(msg):
         logging.warn(msg)
-        await bot.send_message(bot.get_channel(id="329608444728442881"), "```\n----- WARNING ({0.tm_hour}:{0.tm_min}.{0.tm_sec}) -----\n\n{1}```".format(time.localtime(time.time()), msg))
+        #await bot.send_message(bot.get_channel(id="329608444728442881"), "```\n----- WARNING ({0.tm_hour}:{0.tm_min}.{0.tm_sec}) -----\n\n{1}```".format(time.localtime(time.time()), msg))
     async def error(msg):
         logging.error(msg)
-        await bot.send_message(bot.get_channel(id="329608444728442881"), "```py\n----- ERROR ({0.tm_hour}:{0.tm_min}.{0.tm_sec}) -----\n\n{1}```".format(time.localtime(time.time()), msg))
+        #await bot.send_message(bot.get_channel(id="329608444728442881"), "```py\n----- ERROR ({0.tm_hour}:{0.tm_min}.{0.tm_sec}) -----\n\n{1}```".format(time.localtime(time.time()), msg))
     async def fatal(msg):
         logging.fatal(msg)
-        await bot.send_message(bot.get_channel(id="329608444728442881"), "```py\n----- FATAL ({0.tm_hour}:{0.tm_min}.{0.tm_sec}) -----\n\n{1}```".format(time.localtime(time.time()), msg))
+        #await bot.send_message(bot.get_channel(id="329608444728442881"), "```py\n----- FATAL ({0.tm_hour}:{0.tm_min}.{0.tm_sec}) -----\n\n{1}```".format(time.localtime(time.time()), msg))
 
 def queue_get_all(q, m=10):
     items = []
@@ -304,57 +304,69 @@ class Music:
             success = await ctx.invoke(self.summon)
             if not success:
                 pass
-
-        try:
-            player = await state.voice.create_ytdl_player(song, ytdl_options=opts, after=state.toggle_next, before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5")
-        except OSError as e:
-            errors += 1
-            await logger.fatal(str(e))
-            await self.bot.say(embed=embeds.fatal(str(e)))
-        except youtube_dl.utils.GeoRestrictedError:
-            await self.bot.say(embed=errors.error("This video is not available in your country."))
-        except youtube_dl.utils.DownloadError as e:
-            errors += 1
-            await self.bot.say("An error occurred while downloading this video: {}".format(str(e)))
-        except Exception as e:
-            e = str(e)
-            errors += 1
-            await logger.error(e)
-            await logger.error(traceback.format_exc())
-            await self.bot.say(embed=embeds.error(e))
-        else:
-            player.volume = 0.6
+        vc = ctx.message.server.me.voice.voice_channel
+        if vc is not None and ctx.message.author in vc.voice_members:
             try:
-                entry = VoiceEntry(ctx.message, player)
-            except Exception as e:
-                await logger.error(str(e))
+                player = await state.voice.create_ytdl_player(song, ytdl_options=opts, after=state.toggle_next, before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5")
+            except OSError as e:
                 errors += 1
+                await logger.fatal(str(e))
                 await self.bot.say(embed=embeds.fatal(str(e)))
+            except youtube_dl.utils.GeoRestrictedError:
+                await self.bot.say(embed=errors.error("This video is not available in your country."))
+            except youtube_dl.utils.DownloadError as e:
+                errors += 1
+                await self.bot.say("An error occurred while downloading this video: {}".format(str(e)))
+            except Exception as e:
+                e = str(e)
+                errors += 1
+                await logger.error(e)
+                await logger.error(traceback.format_exc())
+                await self.bot.say(embed=embeds.error(e))
             else:
+                player.volume = 0.6
                 try:
-                    await state.songs.put(entry)
-                    await self.bot.say(':notes: Added ' + str(entry) + ' to the queue.')
-                except asyncio.QueueFull:
-                    await self.bot.say(':no_entry_sign: You can only have 10 songs in queue at a time!')
+                    entry = VoiceEntry(ctx.message, player)
+                except Exception as e:
+                    await logger.error(str(e))
+                    errors += 1
+                    await self.bot.say(embed=embeds.fatal(str(e)))
+                else:
+                    try:
+                        await state.songs.put(entry)
+                        await self.bot.say(':notes: Added ' + str(entry) + ' to the queue.')
+                    except asyncio.QueueFull:
+                        await self.bot.say(':no_entry_sign: You can only have 10 songs in queue at a time!')
+        else:
+            if vc is not None:
+                await self.bot.say(embed=embeds.permission_denied("You are not in the current voice channel."))
 
 
     @commands.command(pass_context=True, no_pm=True)
     async def volume(self, ctx, value : int): # !!volume
         """Sets the volume of the currently playing song."""
-        state = self.get_voice_state(ctx.message.server)
-        if state.is_playing():
-            player = state.player
-            player.volume = value / 100
-            await self.bot.say(':speaker: :notes: Set the volume to {:.0%}'.format(player.volume))
+        vc = ctx.message.server.me.voice.voice_channel
+        if vc is not None and ctx.message.author in vc.voice_members:
+            state = self.get_voice_state(ctx.message.server)
+            if state.is_playing():
+                player = state.player
+                player.volume = value / 100
+                await self.bot.say(':speaker: :notes: Set the volume to {:.0%}'.format(player.volume))
+        else:
+            await self.bot.say(embed=embeds.permission_denied("You are not in the current voice channel or the player is stopped."))
 
     @commands.command(pass_context=True, no_pm=True)
     async def pause(self, ctx): # !!pause
         """Pauses the currently played song."""
-        state = self.get_voice_state(ctx.message.server)
-        if state.is_playing():
-            player = state.player
-            player.pause()
-            await self.bot.say(":pause_button: Paused the player. Use `!!resume` to resume the player.")
+        vc = ctx.message.server.me.voice.voice_channel
+        if vc is not None and ctx.message.author in vc.voice_members:
+            state = self.get_voice_state(ctx.message.server)
+            if state.is_playing():
+                player = state.player
+                player.pause()
+                await self.bot.say(":pause_button: Paused the player. Use `!!resume` to resume the player.")
+        else:
+            await self.bot.say(embed=embeds.permission_denied("You are not in the current voice channel or the player is stopped."))
 
     @commands.command(pass_context=True, no_pm=True)
     async def queue(self, ctx): # !!queue
@@ -387,17 +399,20 @@ class Music:
         """
         server = ctx.message.server
         state = self.get_voice_state(server)
+        vc = ctx.message.server.me.voice.voice_channel
+        if vc is not None and ctx.message.author in vc.voice_members:
+            if state.is_playing():
+                player = state.player
+                player.stop()
 
-        if state.is_playing():
-            player = state.player
-            player.stop()
-
-        try:
-            state.audio_player.cancel()
-            del self.voice_states[server.id]
-            await state.voice.disconnect()
-        except:
-            pass
+            try:
+                state.audio_player.cancel()
+                del self.voice_states[server.id]
+                await state.voice.disconnect()
+            except:
+                pass
+        else:
+            await self.bot.say(embed=embeds.permission_denied("You are not in the current voice channel or the player is stopped."))
 
     @commands.command(pass_context=True, no_pm=True)
     async def skip(self, ctx): # !!skip
@@ -410,20 +425,37 @@ class Music:
             return
 
         voter = ctx.message.author
+        is_dj = False
+        for r in voter.roles:
+            if r.name == "DJ":
+                is_dj = True
         users_in_channel = len(ctx.message.server.me.voice.voice_channel.voice_members) - 1
-        if voter == state.current.requester:
-            await self.bot.say(':fast_forward: Skipping song...')
-            state.skip()
-        elif voter.id not in state.skip_votes:
-            state.skip_votes.add(voter.id)
-            total_votes = len(state.skip_votes)
-            if total_votes >= users_in_channel:
-                await self.bot.say(':fast_forward: Skip vote passed, skipping song...')
+        if state.is_playing() and voter in ctx.message.server.me.voice.voice_channel.voice_members:
+            if voter == state.current.requester or is_dj:
+                await self.bot.say(':fast_forward: Skipping song...')
                 state.skip()
+            elif (voter.id not in state.skip_votes) or total_votes >= users_in_channel:
+                state.skip_votes.add(voter.id)
+                total_votes = len(state.skip_votes)
+                if total_votes >= users_in_channel:
+                    e = discord.Embed()
+                    e.title = "Skip Song"
+                    e.description = "Skip vote passed. Skipping song..."
+                    e.set_footer(text="Users with a role named 'DJ' can automatically skip songs.")
+                    await self.bot.say(':fast_forward: Skip vote passed, skipping song...')
+                    state.skip()
+                else:
+                    e = discord.Embed()
+                    e.title = "Skip Song"
+                    e.description = "Skip vote added."
+                    e.add_field(name='Total Votes', value=total_votes)
+                    e.add_field(name='Votes Needed', value=users_in_channel)
+                    e.set_footer(text="Users with a role named 'DJ' can automatically skip songs.")
+                    await self.bot.say(embed=e)
             else:
-                await self.bot.say(':fast_forward: Skip vote added, currently at [{}/{}]'.format(total_votes, users_in_channel))
+                await self.bot.say(embed=embeds.permission_denied("You have already voted to skip this song!"))
         else:
-            await self.bot.say(':warning: You have already voted to skip this song!')
+            await self.bot.say(embed=embeds.permission_denied("You are not in the current voice channel or the player is stopped."))
 
     @commands.command(pass_context=True, no_pm=True)
     async def playing(self, ctx): # !!playing
@@ -766,6 +798,7 @@ class General:
 
     @commands.command(pass_context=True)
     async def servers(self, ctx): # !!servers
+        await self.bot.add_reaction(ctx.message, "📬")
         incr = 0
         percent = 0
         max_incr = 25
@@ -774,13 +807,13 @@ class General:
             await self.bot.send_typing(ctx.message.channel)
             embed = discord.Embed(color=ctx.message.server.me.color)
             embed.title = "NanoBot Servers (Page {}/{})".format(str(page), str(math.ceil(len(self.bot.servers) / 25)))
-            embed.set_footer(text="Requested by {}".format(ctx.message.author), icon_url=ctx.message.author.avatar_url)
+            embed.set_footer(text="{} servers / {} users".format(self.bot.servers, tot_users), icon_url=ctx.message.author.avatar_url)
             for server in list(self.bot.servers)[incr:max_incr]:
                 this_percent = (len(server.members) / tot_users) * 100
                 percent += this_percent
                 embed.add_field(name=server.name, value="ID: {} / {} users ({}%)".format(server.id, str(len(server.members)), str(this_percent)))
-            await self.bot.send_message(ctx.message.channel, embed=embed)
-            logging.info("Added up to {}% of users".format(str(percent)))
+            await self.bot.send_message(ctx.message.author, embed=embed)
+            logging.debug("Added up to {}% of users".format(str(percent)))
             incr += 25
             max_incr += 25
 

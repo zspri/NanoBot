@@ -3,6 +3,9 @@
 | Name         | Value | Description                             | Requires role? |
 | ------------ | ----- | --------------------------------------- | -------------- |
 | NanoBot User | 1     | Your average user.                      | No             |
-| NanoBot Mod  | 2     | Moderators can use moderation commands. | Yes\*          |
+| NanoBot DJ   | 2     | Can skip songs instantly.               | Yes\*          |
+| NanoBot Mod  | 3     | Moderators can use moderation commands. | Yes\*\*        |
 
-\* Moderation commands require a role named "Moderator", "Mod", "Discord Mod" or "NanoBot Mod"
+\* To be a DJ, you need to have a role named "DJ"
+
+\*\* Moderation commands require a role named "Moderator", "Mod", "Discord Mod" or "NanoBot Mod"
