@@ -76,6 +76,7 @@ class embeds:
         e = discord.Embed()
         e.add_field(name="Invalid Syntax", value=message)
         e.set_footer(text="Commands reference: http://nanomotion.xyz/NanoBot/commands.html")
+        return e
     def permission_denied(message="You don't have permission to do that."):
         e = discord.Embed()
         e.add_field(name="Permission Denied", value=message)
@@ -486,21 +487,19 @@ class Moderation:
     @commands.command(pass_context=True, no_pm=True)
     @commands.check(ismod)
     async def prune(self, ctx, limit : int): # !!prune
-        """Bulk-deletes the specified amount of messages."""
+        """Deletes the specified amount of messages."""
         global errors
         if not limit > 1:
-            await self.bot.say(":no_entry_sign: You can only bulk-delete more than 1 message!")
-        elif not limit < 101:
-            await self.bot.say(":no_entry_sign: You can only bulk-delete less than 101 messages!")
+            await self.bot.say(":no_entry_sign: You can only delete more than 1 message!")
         else:
-            counter = 0
-            msgs = []
+            counter = -1
             await self.bot.send_typing(ctx.message.channel)
             try:
-                async for log in self.bot.logs_from(ctx.message.channel, limit=limit):
-                    msgs.append(log)
+                async for log in self.bot.logs_from(ctx.message.channel, limit=limit + 1):
+                    await self.bot.delete_message(log)
                     counter += 1
-                await self.bot.delete_messages(msgs)
+                    if counter % 5 == 0:
+                        await self.bot.send_typing(ctx.message.channel)
             except Exception as e:
                 errors += 1
                 await logger.error(str(e))
@@ -508,24 +507,31 @@ class Moderation:
             else:
                 await self.bot.say(':zap: Deleted {} messages.'.format(counter))
 
-    @commands.command(pass_context=True)
+    @commands.command(pass_context=True, no_pm=True)
     @commands.check(ismod)
-    async def prune2(self, ctx, *, messages : int): # !!prune2
-        """Individually deletes the specified amount of messages."""
-        counter = 0
-        await self.bot.say(embed=embeds.warning("This command is deprecated and will be removed in a future release. Resuming in 5 seconds"))
-        await asyncio.sleep(5)
-        await self.bot.send_typing(ctx.message.channel)
+    async def ban(self, ctx, user : discord.Member, *, reason : str):
         try:
-            async for log in self.bot.logs_from(ctx.message.channel, limit=messages):
-                await self.bot.delete_message(log)
-                counter += 1
-        except Exception as e:
-            errors += 1
-            await logger.error(str(e))
-            await self.bot.say(embed=embeds.error(str(e)))
+            await self.bot.send_message(user, "You were banned from **{}** by the moderator **{}** for the reason: `{}`".format(ctx.message.server.name, ctx.message.author, reason))
+            await self.bot.ban(user, delete_message_days=0)
+        except discord.Forbidden:
+            await self.bot.say(embed=embeds.error("I don't have the correct permissions to do that."))
+        except:
+            raise
         else:
-            await self.bot.send_message(ctx.message.channel, 'Deleted {} messages.'.format(counter))
+            await self.bot.say("Successfully banned " + str(user))
+
+    @commands.command(pass_context=True, no_pm=True)
+    @commands.check(ismod)
+    async def kick(self, ctx, user : discord.Member, *, reason : str):
+        try:
+            await self.bot.send_message(user, "You were kicked from **{}** by the moderator **{}** for the reason: `{}`".format(ctx.message.server.name, ctx.message.author, reason))
+            await self.bot.kick(user)
+        except discord.Forbidden:
+            await self.bot.say(embed=embeds.error("I don't have the correct permissions to do that."))
+        except:
+            raise
+        else:
+            await self.bot.say("Successfully kicked " + str(user))
 
 class Admin:
 

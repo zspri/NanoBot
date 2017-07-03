@@ -13,8 +13,9 @@
 !!cat - http://random.cat
 !!status - Shows statuspage.io info
 [2]: Moderation
-!!prune <messages> - Bulk-deletes up to 100 messages
-!!prune2 <messages> - Individually deletes up to 100 messages
+!!prune <messages> - Deletes the specified amount of messages.
+!!kick <user> <reason> - Kick <user> for <reason>. This sends a DM to the user.
+!!ban <user> <reason> - Ban <user> for <reason>. This sends a DM to the user.
 [3]: Music
 !!join <channel> - Joins the specified channel
 !!summon - Joins your voice channel
@@ -28,4 +29,4 @@
 !!skip - Skips the current song
 !!playing - Shows the current song
 ```
-Join the server for help and info: https://discord.gg/eDRnXd6
+Join the server for help and updates: https://discord.gg/eDRnXd6
