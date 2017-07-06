@@ -137,7 +137,7 @@ if __name__ == "__main__":
         x = os.system('ping gateway.discord.gg')
         sys.exit(x)
     elif args.verbose:
-        logging.setLevel(logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG)
         logging.debug("Logging level set to DEBUG")
     elif args.maintenance:
         x = os.system('start maintenance.py')
@@ -873,44 +873,47 @@ class General:
 
     @commands.command(pass_context=True, no_pm=True, aliases=['botinfo'])
     async def info(self, ctx): # !!info
-        """Shows bot info."""
-        global start_time
-        global errors
-        global st_servers
-        global proc_info
-        await self.bot.send_typing(ctx.message.channel)
-        pyver = ""
-        for x in sys.version_info[0:3]:
-            if x == sys.version_info[2]:
-                pyver += str(x)
-            else:
-                pyver += str(x) + "."
-        #sysmem = psutil.virtual_memory()
-        logging.debug("Got VM state")
-        elapsed_time = time.gmtime(time.time() - start_time)
-        logging.debug("Got bot uptime")
-        stp = str(elapsed_time[7] - 1) + " days, " + str(elapsed_time[3]) + " hours, " + str(elapsed_time[4]) + " minutes"
-        logging.debug("Formatted bot uptime")
-        #mem = str(memory() / 1000000) + " / " + str(sysmem.total / 1000000) + " MB"
-        logging.debug("Formatted VM")
-        users = sum(1 for _ in self.bot.get_all_members())
-        logging.debug("Got all bot users")
-        embed = discord.Embed(color=ctx.message.server.me.color)
-        embed.title = "NanoBot Status"
-        embed.set_footer(text="NanoBot#2520")
-        embed.set_thumbnail(url=ctx.message.server.me.avatar_url)
-        embed.add_field(name="Version", value="discord.py {}\nPython {}".format(discord.__version__, pyver))
-        embed.add_field(name="Commands Processed", value=str(len(cmds_this_session)))
-        embed.add_field(name="Songs Played", value=str(len(songs_played)))
-        embed.add_field(name="Uptime", value=stp)
-        embed.add_field(name="Errors", value=str(errors) + " (" + str(round(errors/len(cmds_this_session) * 100)) + "%)")
-        embed.add_field(name="Servers", value=str(len(self.bot.servers)))
-        embed.add_field(name="Users", value=str(users))
-        #embed.add_field(name="Used Memory", value=mem)
-        embed.add_field(name="Processor Info", value='`' + proc_info + '`')
-        embed.add_field(name="Voice Sessions", value=str(len(self.bot.voice_clients)))
-        logger.debug("Created Embed")
-        await self.bot.send_message(ctx.message.channel, embed=embed)
+        try:
+            """Shows bot info."""
+            global start_time
+            global errors
+            global st_servers
+            global proc_info
+            await self.bot.send_typing(ctx.message.channel)
+            pyver = ""
+            for x in sys.version_info[0:3]:
+                if x == sys.version_info[2]:
+                    pyver += str(x)
+                else:
+                    pyver += str(x) + "."
+            #sysmem = psutil.virtual_memory()
+            logging.debug("Got VM state")
+            elapsed_time = time.gmtime(time.time() - start_time)
+            logging.debug("Got bot uptime")
+            stp = str(elapsed_time[7] - 1) + " days, " + str(elapsed_time[3]) + " hours, " + str(elapsed_time[4]) + " minutes"
+            logging.debug("Formatted bot uptime")
+            #mem = str(memory() / 1000000) + " / " + str(sysmem.total / 1000000) + " MB"
+            logging.debug("Formatted VM")
+            users = sum(1 for _ in self.bot.get_all_members())
+            logging.debug("Got all bot users")
+            embed = discord.Embed(color=ctx.message.server.me.color)
+            embed.title = "NanoBot Status"
+            embed.set_footer(text="NanoBot#2520")
+            embed.set_thumbnail(url=ctx.message.server.me.avatar_url)
+            embed.add_field(name="Version", value="discord.py {}\nPython {}".format(discord.__version__, pyver))
+            embed.add_field(name="Commands Processed", value=str(len(cmds_this_session)))
+            embed.add_field(name="Songs Played", value=str(len(songs_played)))
+            embed.add_field(name="Uptime", value=stp)
+            embed.add_field(name="Errors", value=str(errors) + " (" + str(round(errors/len(cmds_this_session) * 100)) + "%)")
+            embed.add_field(name="Servers", value=str(len(self.bot.servers)))
+            embed.add_field(name="Users", value=str(users))
+            #embed.add_field(name="Used Memory", value=mem)
+            embed.add_field(name="Processor Info", value='`' + proc_info + '`')
+            embed.add_field(name="Voice Sessions", value=str(len(self.bot.voice_clients)))
+            logger.debug("Created Embed")
+            await self.bot.send_message(ctx.message.channel, embed=embed)
+        except:
+            raise
 
     @commands.command(pass_context=True, no_pm=True, aliases=['server', 'guildinfo', 'serverinfo'])
     async def guild(self, ctx): # !!guild
@@ -1181,7 +1184,7 @@ bot.add_cog(Status(bot))
 async def on_server_join(server): # When the bot joins a server
     print(color.GREEN + "Joined server " + str(server.id)+ " (" + str(server.name) + ")")
     await logger.info("Joined server {0.name} (ID: `{0.id}`)".format(server))
-    await bot.send_message(server.default_channel, ':wave: Hi, I\'m NanoBot! Thanks for adding me to your server. Type `!!help` for help and tips on what I can do.')
+    await bot.send_message(server.default_channel, ':wave: Hi, I\'m NanoBot! For help on what I can do, type `!help`. Join the NanoBot Discord for support and updates: https://discord.io/nano-bot')
 
 @bot.event
 async def on_server_remove(server): # When the bot leaves a server
@@ -1192,13 +1195,6 @@ async def on_server_remove(server): # When the bot leaves a server
 async def on_member_join(member): # When a member joins a server
     if str(member.server.id) == "294215057129340938":
         await bot.send_message(member.server.get_channel("314136139755945984"), ":wave: Welcome " + str(member.mention) + " to the server!")
-
-@bot.event
-async def on_member_ban(member): # When a member is banned
-    global active_reasons
-    if str(member.server.id) == "311611939195322369":
-        tmp = await bot.send_message(member.server.get_channel("329685683608485889"), "**User Banned**\nMember: {0}\nResponsible moderator: *Unknown*\nReason: *Type !!reason <reason>*".format(member, len(active_reasons) + 1))
-        active_reasons = {"message":tmp, "member":member}
 
 @bot.event
 async def on_command_error(error, ctx): # When a command error occurrs

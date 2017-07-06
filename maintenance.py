@@ -34,7 +34,7 @@ async def on_error(event, *args, **kwargs): # When an error occurrs
         await client.send_message(discord.User(id="236251438685093889"), ":warning: An error occurred in `" + str(event) + "`: ```python" + traceback.format_exc() + "```")
     except Exception as e:
         logging.warn("Failed to create direct message: " + str(e))
-    
+
 @client.event
 async def on_message(message): # When a message is sent
     if message.content.startswith('!!'):
@@ -43,8 +43,8 @@ async def on_message(message): # When a message is sent
         await client.send_message(message.channel, ":wave: Shutting down...")
         await client.change_presence(status=discord.Status.offline)
         sys.exit(0)
-    elif message.content.startswith('!!'):
-        await client.send_message(message.channel, ":tools: I'd like to help, but I'm in maintenance mode right now. Sorry about that.")
+    elif message.content.startswith('!!') and not message.content.startswith('!!!'):
+        await client.send_message(message.channel, ":tools: I'm in maintenance mode right now!")
 
 @client.event
 async def on_ready():
@@ -53,5 +53,5 @@ async def on_ready():
     print(client.user.id)
     print('------')
     await client.change_presence(status=discord.Status.dnd, game=discord.Game(name='Maintenance'))
-    
+
 client.run(os.getenv('NANOBOT_TOKEN'))
