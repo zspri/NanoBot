@@ -82,6 +82,34 @@ class embeds:
         e.add_field(name="Permission Denied", value=message)
         e.set_footer(text="Permissions reference: http://nanomotion.xyz/NanoBot/permissions.html")
         return e
+    def server_join(server):
+        e = discord.Embed(discord.Color.green())
+        e.title = "Joined Guild"
+        e.add_field(name="Name", value=server.name)
+        e.add_field(name="ID", value=server.id)
+        usrs = 0
+        bots = 0
+        for usr in server.members:
+            if usr.bot:
+                bots += 1
+            else:
+                usrs += 1
+        e.add_field(name="Users", value="{} members / {} bots".format(usrs, bots))
+        e.add_field(name="Owner", value=server.owner)
+    def server_leave(server):
+        e = discord.Embed(discord.Color.red())
+        e.title = "Left Guild"
+        e.add_field(name="Name", value=server.name)
+        e.add_field(name="ID", value=server.id)
+        usrs = 0
+        bots = 0
+        for usr in server.members:
+            if usr.bot:
+                bots += 1
+            else:
+                usrs += 1
+        e.add_field(name="Users", value="{} members / {} bots".format(usrs, bots))
+        e.add_field(name="Owner", value=server.owner)
 
 class logger:
     def debug(msg):
@@ -537,6 +565,20 @@ class Admin:
 
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.command(pass_context=True, hidden=True)
+    async def embed(self, ctx, ecolor : str, *, content : str):
+        await self.bot.send_typing(ctx.message.channel)
+        color = discord.Color.default()
+        if ecolor.lower() == "red":
+            color = discord.Color.red()
+        elif ecolor.lower() == "green":
+            color = discord.Color.green()
+        elif e.color.lower() == "yellow":
+            color = discord.Color.gold()
+        e = discord.Embed(color=color)
+        e.description = content
+        await self.bot.say(embed=e)
 
     @commands.command(pass_context=True, hidden=True)
     async def say(self, ctx, *, mesg : str):
@@ -1184,12 +1226,17 @@ bot.add_cog(Status(bot))
 async def on_server_join(server): # When the bot joins a server
     print(color.GREEN + "Joined server " + str(server.id)+ " (" + str(server.name) + ")")
     await logger.info("Joined server {0.name} (ID: `{0.id}`)".format(server))
-    await bot.send_message(server.default_channel, ':wave: Hi, I\'m NanoBot! For help on what I can do, type `!help`. Join the NanoBot Discord for support and updates: https://discord.io/nano-bot')
+    try:
+        await bot.send_message(server.default_channel, ':wave: Hi, I\'m NanoBot! For help on what I can do, type `!help`. Join the NanoBot Discord for support and updates: https://discord.io/nano-bot')
+    except:
+        pass
+    await bot.send_message(bot.get_channel(id="333635296132595712", embed=embeds.server_join(server)))
 
 @bot.event
 async def on_server_remove(server): # When the bot leaves a server
     print(color.RED + "Left server " + str(server.id) + " (" + str(server.name) + ")")
     await logger.info("Left server {0.name} (ID: `{0.id}`)".format(server))
+    await bot.send_message(bot.get_channel(id="333635296132595712", embed=embeds.server_leave(server)))
 
 @bot.event
 async def on_member_join(member): # When a member joins a server
@@ -1227,6 +1274,7 @@ async def on_command_error(error, ctx): # When a command error occurrs
             if _traceback is not None:
                 await logger.error(_traceback)
             await bot.send_message(ctx.message.channel, embed=embeds.error(error))
+            await bot.send_message(bot.get_channel(id="333635296132595712"), embed=embeds.error("{}: {}"[:900].format(_type, _value)))
 
 @bot.event
 async def on_message(message): # When a message is sent
