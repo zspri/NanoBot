@@ -1,4 +1,4 @@
 @ECHO off
 title NanoBot
-start bot.py
+python bot.py
 exit
