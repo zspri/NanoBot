@@ -1282,6 +1282,8 @@ async def on_message(message): # When a message is sent
         global cmds_this_session
         await logger.info(message.author.name + "#" + str(message.author.discriminator) + " (ID: " + str(message.author.id) + ") entered command " + message.content)
         cmds_this_session.append(message.content)
+        if message.content == "!!":
+            await bot.send_message(message.channel, ":thinking: Why did you even think that would work? Type `!!help` for help.")
         if message.content == "!!help":
             f = open('help.txt', 'r')
             await bot.send_message(message.channel, f.read())
