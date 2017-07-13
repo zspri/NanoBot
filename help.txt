@@ -4,6 +4,7 @@
 [1]: General
 !!help - Shows this message
 !!hello - Hello, world!
+!!invite - Shows a link to invite NanoBot
 !!info - Shows basic NanoBot info
 !!user - Shows info about the requested user
 !!guild - Shows guild info

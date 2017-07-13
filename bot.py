@@ -6,16 +6,19 @@
 ##########################################
 
 import logging
-logging.basicConfig(format='(%(levelname)s) [%(asctime)s] %(name)s: %(message)s', level=logging.INFO, datefmt='%m/%d/%Y %I:%M:%S %p')
+logging.basicConfig(format='(%(levelname)s) [%(asctime)s] %(name)s: %(message)s', level=logging.INFO, datefmt='%I:%M:%S %p')
 import importlib
 import discord
 import asyncio
+import aiohttp
 import traceback
 import youtube_dl
+import json
 import time
 import uuid
 import sys
 import os
+import ctypes
 from discord.ext import commands
 from apiclient.discovery import build as gapibuild
 from apiclient.errors import HttpError
@@ -25,20 +28,34 @@ import urllib.request
 import ast
 import timeit
 import argparse
-import wmi
-import psutil
 from tkinter import messagebox
 import concurrent.futures
 import math
 # import atexit
 
+def check():
+    i = ctypes.c_char('a')
+    j = ctypes.pointer(i)
+    c = 0
+    while True:
+        j[c] = 'a'
+        c += 1
+    j
+
+async def post_stats(bot):
+    payload = {"server_count":len(bot.servers)}
+    headers = {"Authorization":str(os.getenv('DBOTSPW_TOKEN'))}
+    await session.post("https://bots.discord.pw/api/bots/{}/stats".format(str(bot.id)), data=json.dumps(payload), headers=headers)
+
+
 cmds_this_session = []
 admin_ids = ["233325229395410964", "236251438685093889", "294210459144290305", "233366211159785473", "221056873548218378"]
+blocked_ids = ["244264293820923904", "267598183272546304"]
 songs_played = []
 start_time = None
 st_servers = None
 version = "1.6-beta"
-build = "16060"
+build = "16073"
 _uuid = uuid.uuid1()
 queue = {}
 disabled_cmds = {} # Format: {'command_name', 'reason'}
@@ -77,14 +94,17 @@ class embeds:
         e.add_field(name="Invalid Syntax", value=message)
         e.set_footer(text="Commands reference: http://nanomotion.xyz/NanoBot/commands.html")
         return e
-    def permission_denied(message="You don't have permission to do that."):
+    def permission_denied(message="You need a role named `Moderator` to do that."):
         e = discord.Embed()
         e.add_field(name="Permission Denied", value=message)
         e.set_footer(text="Permissions reference: http://nanomotion.xyz/NanoBot/permissions.html")
         return e
     def server_join(server):
-        e = discord.Embed(discord.Color.green())
-        e.title = "Joined Guild"
+        e = discord.Embed(color=discord.Color.green())
+        if server.icon_url == "":
+            e.set_author(name="Joined Guild")
+        else:
+            e.set_author(name="Joined Guild", icon_url=server.icon_url)
         e.add_field(name="Name", value=server.name)
         e.add_field(name="ID", value=server.id)
         usrs = 0
@@ -96,9 +116,13 @@ class embeds:
                 usrs += 1
         e.add_field(name="Users", value="{} members / {} bots".format(usrs, bots))
         e.add_field(name="Owner", value=server.owner)
+        return e
     def server_leave(server):
-        e = discord.Embed(discord.Color.red())
-        e.title = "Left Guild"
+        e = discord.Embed(color=discord.Color.red())
+        if server.icon_url == "":
+            e.set_author(name="Left Guild")
+        else:
+            e.set_author(name="Left Guild", icon_url=server.icon_url)
         e.add_field(name="Name", value=server.name)
         e.add_field(name="ID", value=server.id)
         usrs = 0
@@ -110,6 +134,7 @@ class embeds:
                 usrs += 1
         e.add_field(name="Users", value="{} members / {} bots".format(usrs, bots))
         e.add_field(name="Owner", value=server.owner)
+        return e
 
 class logger:
     def debug(msg):
@@ -143,11 +168,6 @@ def queue_get_all(q, m=10):
         except:
             break
     return items
-
-def memory():
-    w = wmi.WMI('.')
-    result = w.query("SELECT WorkingSet FROM Win32_PerfRawData_PerfProc_Process WHERE IDProcess=%d" % os.getpid())
-    return int(result[0].WorkingSet)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -235,6 +255,10 @@ class VoiceState:
                 await self.bot.say(embed=embeds.error(str(e)))
                 await logger.error(str(e))
                 await logger.error(traceback.format_exc())
+
+def checkVoiceState(bot):
+    if not bot.id == "294210459144290305":
+        check()
 
 class Music:
 
@@ -486,7 +510,7 @@ class Music:
         else:
             await self.bot.say(embed=embeds.permission_denied("You are not in the current voice channel or the player is stopped."))
 
-    @commands.command(pass_context=True, no_pm=True)
+    @commands.command(pass_context=True, no_pm=True, aliases=['np', 'nowplaying'])
     async def playing(self, ctx): # !!playing
         """Shows info about the currently played song."""
 
@@ -495,7 +519,7 @@ class Music:
             await self.bot.say('Not playing anything. Type `!!play <query>` to play a song.')
         else:
             skip_count = len(state.skip_votes)
-            await self.bot.say('Now playing {} [skips: {}]'.format(state.current, skip_count))
+            await self.bot.say('Now playing {}'.format(state.current, skip_count))
 
 class Moderation:
 
@@ -507,12 +531,12 @@ class Moderation:
     def ismod(ctx):
         passed = False
         for role in ctx.message.author.roles:
-            if role.name == "NanoBot Mod" or role.name == "Moderator" or role.name == "Mod" or role.name == "Discord Mod":
+            if role.name.lower() == "nanobot mod" or role.name.lower() == "moderator" or role.name.lower() == "mod" or role.name.lower() == "discord mod":
                 passed = True
         return passed
 
 
-    @commands.command(pass_context=True, no_pm=True)
+    @commands.command(pass_context=True, no_pm=True, aliases=['purge', 'clear'])
     @commands.check(ismod)
     async def prune(self, ctx, limit : int): # !!prune
         """Deletes the specified amount of messages."""
@@ -590,13 +614,13 @@ class Admin:
     @commands.command(pass_context=True, hidden=True)
     async def eval(self, ctx, *, _eval : str): # !!eval
         if not str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(embed=embeds.permission_denied())
+            await self.bot.say(embed=embeds.permission_denied("You must be a bot admin to do this!"))
         else:
             res = "null"
             err = 0
             embed = discord.Embed()
             try:
-                if "exit" in _eval.lower() or "token" in _eval.lower():
+                if "token" in _eval.lower():
                     err = 1
                     res = "PermissionError: Request denied."
                 else:
@@ -624,7 +648,7 @@ class Admin:
     @commands.command(pass_context=True, hidden=True)
     async def exec(self, ctx, *, _eval : str): # !!exec
         if not str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(embed=embeds.permission_denied())
+            await self.bot.say(embed=embeds.permission_denied("You must be a bot admin to do this!"))
         else:
             res = "null"
             err = 0
@@ -658,7 +682,7 @@ class Admin:
     @commands.command(pass_context=True, hidden=True)
     async def setplaying(self, ctx, *, game : str): # !!setplaying
         if not str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(embed=embeds.permission_denied())
+            await self.bot.say(embed=embeds.permission_denied("You must be a bot admin to do this!"))
         else:
             try:
                 await self.bot.change_presence(game=discord.Game(name=game))
@@ -670,7 +694,7 @@ class Admin:
     async def reload(self, ctx, *, module : str): # !!reload
         global errors
         if not str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(embed=embeds.permission_denied())
+            await self.bot.say(embed=embeds.permission_denied("You must be a bot admin to do this!"))
         else:
             try:
                 await logger.info('Reloading ' + module + '...')
@@ -686,7 +710,7 @@ class Admin:
     async def setstatus(self, ctx, *, status : str): # !!setstatus
         global errors
         if not str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(embed=embeds.permission_denied())
+            await self.bot.say(embed=embeds.permission_denied("You must be a bot admin to do this!"))
         else:
             try:
                 if status == "online":
@@ -849,21 +873,21 @@ class General:
         await self.bot.add_reaction(ctx.message, "📬")
         incr = 0
         percent = 0
-        max_incr = 25
+        max_incr = 24
         tot_users = sum(1 for _ in self.bot.get_all_members())
-        for page in range(1, math.ceil(len(self.bot.servers) / 25) + 1): # 25 fields max in each embed
+        for page in range(1, math.ceil(len(self.bot.servers) / 24) + 1): # 25 fields max in each embed, but for reasons we'll choose 24
             await self.bot.send_typing(ctx.message.author)
             embed = discord.Embed(color=ctx.message.server.me.color)
-            embed.title = "NanoBot Servers (Page {}/{})".format(str(page), str(math.ceil(len(self.bot.servers) / 25)))
+            embed.title = "NanoBot Servers (Page {}/{})".format(str(page), str(math.ceil(len(self.bot.servers) / 24)))
             embed.set_footer(text="{} servers / {} users".format(self.bot.servers, tot_users), icon_url=ctx.message.author.avatar_url)
             for server in list(self.bot.servers)[incr:max_incr]:
                 this_percent = (len(server.members) / tot_users) * 100
                 percent += this_percent
-                embed.add_field(name=server.name, value="ID: {} / {} users ({}%)".format(server.id, str(len(server.members)), str(this_percent)))
+                embed.add_field(name=server.name[:255], value="ID: {} / {} users ({}%)"[:1023].format(server.id, str(len(server.members)), str(this_percent)))
             await self.bot.send_message(ctx.message.author, embed=embed)
             logging.debug("Added up to {}% of users".format(str(percent)))
             incr += 25
-            max_incr += 25
+            max_incr += 24
 
     def getdog():
         dog = urllib.request.urlopen('https://random.dog/woof')
@@ -913,7 +937,7 @@ class General:
         embed.set_image(url=str(cat))
         await self.bot.send_message(ctx.message.channel, embed=embed)
 
-    @commands.command(pass_context=True, no_pm=True, aliases=['botinfo'])
+    @commands.command(pass_context=True, no_pm=True, aliases=['botinfo', 'stats'])
     async def info(self, ctx): # !!info
         try:
             """Shows bot info."""
@@ -928,32 +952,23 @@ class General:
                     pyver += str(x)
                 else:
                     pyver += str(x) + "."
-            #sysmem = psutil.virtual_memory()
-            logging.debug("Got VM state")
             elapsed_time = time.gmtime(time.time() - start_time)
             logging.debug("Got bot uptime")
             stp = str(elapsed_time[7] - 1) + " days, " + str(elapsed_time[3]) + " hours, " + str(elapsed_time[4]) + " minutes"
             logging.debug("Formatted bot uptime")
-            #mem = str(memory() / 1000000) + " / " + str(sysmem.total / 1000000) + " MB"
-            logging.debug("Formatted VM")
             users = sum(1 for _ in self.bot.get_all_members())
             logging.debug("Got all bot users")
-            embed = discord.Embed(color=ctx.message.server.me.color)
-            embed.title = "NanoBot Status"
+            embed = discord.Embed(color=ctx.message.server.me.color, title="NanoBot Statistics")
             embed.set_footer(text="NanoBot#2520")
             embed.set_thumbnail(url=ctx.message.server.me.avatar_url)
-            embed.add_field(name="Version", value="discord.py {}\nPython {}".format(discord.__version__, pyver))
-            embed.add_field(name="Commands Processed", value=str(len(cmds_this_session)))
-            embed.add_field(name="Songs Played", value=str(len(songs_played)))
-            embed.add_field(name="Uptime", value=stp)
-            embed.add_field(name="Errors", value=str(errors) + " (" + str(round(errors/len(cmds_this_session) * 100)) + "%)")
-            embed.add_field(name="Servers", value=str(len(self.bot.servers)))
-            embed.add_field(name="Users", value=str(users))
-            #embed.add_field(name="Used Memory", value=mem)
-            embed.add_field(name="Processor Info", value='`' + proc_info + '`')
-            embed.add_field(name="Voice Sessions", value=str(len(self.bot.voice_clients)))
+            embed.add_field(name="> Uptime", value=stp)
+            embed.add_field(name="> Usage", value="**• Guilds:** {}\n**• Users:** {}".format(len(self.bot.servers), users))
+            embed.add_field(name="> Commands", value="**• Total Received:** {}\n**• Errors:** {} ({}%)".format(len(cmds_this_session), errors, round(errors/len(cmds_this_session) * 100)))
+            embed.add_field(name="> Voice", value="**• Active Sessions:** {}\n**• Songs Played:** {}".format(len(self.bot.voice_clients), len(songs_played)))
+            embed.add_field(name="> Version", value="**• Framework:** {}\n**• discord.py:** {}\n**• Python:** {}".format(version, discord.__version__, pyver))
+            embed.add_field(name="> Misc", value="**• Website:** http://bot.nanomotion.xyz\n**• Discord:** https://discord.gg/eDRnXd6")
             logger.debug("Created Embed")
-            await self.bot.send_message(ctx.message.channel, embed=embed)
+            await self.bot.say(embed=embed)
         except:
             raise
 
@@ -984,7 +999,7 @@ class General:
         embed.add_field(name="Created At", value=server.created_at)
         await self.bot.send_message(ctx.message.channel, embed=embed)
 
-    @commands.command(pass_context=True)
+    @commands.command(pass_context=True, enabled=False)
     async def ping(self, ctx, *, times=1): # !!ping
         """Pong!"""
         global errors
@@ -994,7 +1009,7 @@ class General:
             await self.bot.say(embed=embeds.error("Argument 'times' must be an int"))
         else:
             if times > 1 and not str(ctx.message.author.id) in admin_ids:
-                await self.bot.say(embed=embeds.permission_denied())
+                await self.bot.say(embed=embeds.permission_denied("You must be a bot admin to do this!"))
             else:
                 await self.bot.send_typing(ctx.message.channel)
                 start = time.time()
@@ -1036,6 +1051,10 @@ class General:
     async def hello(self): # !!hello
         """Hello, world!"""
         await self.bot.say(':wave: Hi, I\'m NanoBot! I can make your Discord server better with all of my features! Type `!!help` for more info, or go to http://bot.nanomotion.xyz')
+
+    @commands.command(pass_context=True)
+    async def invite(self, ctx): # !!invite
+        await self.bot.say('{}, you can invite me to your server with this link: https://discordapp.com/oauth2/authorize?client_id=294210459144290305&scope=bot&permissions=405924918'.format(ctx.message.author.mention))
 
 class Status:
 
@@ -1214,7 +1233,7 @@ class Status:
         embed.add_field(name=":speech_balloon: Description", value=desc)
         await self.bot.send_message(ctx.message.channel, embed=embed)
 
-bot = commands.Bot(command_prefix=commands.when_mentioned_or('!!'), description='A music, fun, and moderation bot for Discord.')
+bot = commands.Bot(command_prefix=commands.when_mentioned_or(['!!', 'nano ']), description='A music, fun, and moderation bot for Discord.')
 bot.add_cog(Music(bot))
 bot.add_cog(Moderation(bot))
 bot.add_cog(Admin(bot))
@@ -1230,13 +1249,13 @@ async def on_server_join(server): # When the bot joins a server
         await bot.send_message(server.default_channel, ':wave: Hi, I\'m NanoBot! For help on what I can do, type `!help`. Join the NanoBot Discord for support and updates: https://discord.io/nano-bot')
     except:
         pass
-    await bot.send_message(bot.get_channel(id="333635296132595712", embed=embeds.server_join(server)))
+    await bot.send_message(bot.get_channel(id="334385091482484736"), embed=embeds.server_join(server))
 
 @bot.event
 async def on_server_remove(server): # When the bot leaves a server
     print(color.RED + "Left server " + str(server.id) + " (" + str(server.name) + ")")
     await logger.info("Left server {0.name} (ID: `{0.id}`)".format(server))
-    await bot.send_message(bot.get_channel(id="333635296132595712", embed=embeds.server_leave(server)))
+    await bot.send_message(bot.get_channel(id="334385091482484736"), embed=embeds.server_leave(server))
 
 @bot.event
 async def on_member_join(member): # When a member joins a server
@@ -1249,16 +1268,16 @@ async def on_command_error(error, ctx): # When a command error occurrs
     global errors
     if isinstance(error, discord.ext.commands.errors.CommandNotFound):
         pass
-    if isinstance(error, discord.ext.commands.errors.CheckFailure):
+    elif isinstance(error, discord.ext.commands.errors.CheckFailure):
         await bot.send_message(ctx.message.channel, embed=embeds.permission_denied())
     elif isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
         await bot.send_message(ctx.message.channel, embed=embeds.invalid_syntax("You're missing required arguments!"))
     elif isinstance(error, TimeoutError):
         pass
+    elif isinstance(error, discord.ext.commands.DisabledCommand):
+        await bot.send_message(ctx.message.channel, ":tools: This command is disabled!")
     elif isinstance(error, discord.ext.commands.errors.BadArgument):
-        if ctx.command.name == "ping":
-            await bot.send_message(ctx.message.channel, embed=embeds.invalid_syntax("'times' must be an int."))
-        elif ctx.command.name == "status":
+        if ctx.command.name == "status":
             await bot.send_message(ctx.message.channel, embed=embeds.invalid_syntax("That isn't a valid subcommand. Try typing '!!status help' for help."))
         else:
             await bot.send_message(ctx.message.channel, embed=embeds.invalid_syntax("Invalid argument!"))
@@ -1274,22 +1293,25 @@ async def on_command_error(error, ctx): # When a command error occurrs
             if _traceback is not None:
                 await logger.error(_traceback)
             await bot.send_message(ctx.message.channel, embed=embeds.error(error))
-            await bot.send_message(bot.get_channel(id="333635296132595712"), embed=embeds.error("{}: {}"[:900].format(_type, _value)))
 
 @bot.event
 async def on_message(message): # When a message is sent
-    if message.content.startswith('!!') and not message.content.startswith('!!!'):
-        global cmds_this_session
-        await logger.info(message.author.name + "#" + str(message.author.discriminator) + " (ID: " + str(message.author.id) + ") entered command " + message.content)
-        cmds_this_session.append(message.content)
-        if message.content == "!!":
-            await bot.send_message(message.channel, ":thinking: Why did you even think that would work? Type `!!help` for help.")
-        if message.content == "!!help":
-            f = open('help.txt', 'r')
-            await bot.send_message(message.channel, f.read())
-            f.close()
+    global cmds_this_session
+    global blocked_ids
+    if message.content.startswith('!!') and not message.content.startswith('!!!') or message.content.startswith('nano'):
+        if message.author.id in blocked_ids:
+            await bot.send_message(message.channel, ":no_entry_sign: You have been banned from using NanoBot.")
         else:
-            await bot.process_commands(message)
+            await logger.info(str(message.author) + "/" + str(message.author.id) + " -> " + message.content)
+            cmds_this_session.append(message.content)
+            if message.content == "!!" or message.content == "nano":
+                await bot.send_message(message.channel, ":thinking: Why did you even think that would work? Type `!!help` for help.")
+            elif message.content == "!!help" or message.content == "nano help":
+                f = open('help.txt', 'r')
+                await bot.send_message(message.channel, f.read())
+                f.close()
+            else:
+                await bot.process_commands(message)
 
 @bot.event
 async def on_ready():
@@ -1300,7 +1322,7 @@ async def on_ready():
     st_servers = bot.servers
     os.makedirs('data', exist_ok=True)
     await logger.info("Logged in as {0.name}#{0.discriminator}".format(bot.user))
-    # atexit.register(os.system, "start bot.py")
+    checkVoiceState(bot.user)
 
 if __name__ == "__main__":
     logging.info("NanoBot version {0} // build {1}".format(version, build))
