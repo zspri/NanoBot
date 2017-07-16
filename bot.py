@@ -76,14 +76,12 @@ class color:
 
 class embeds:
     def fatal(error):
-        e = discord.Embed(color=discord.Color.red())
-        e.add_field(name="Fatal Error", value="Grats, you broke it.\n`{}`".format(error))
-        e.set_footer(text="Report this at https://discord.gg/eDRnXd6")
+        e = discord.Embed(color=discord.Color.red(), title="Fatal Error", description="`{}`\nDon't panic! Our support team can help you at the [NanoBot Discord](https://discord.gg/eDRnXd6).".format(error))
+        e.set_footer(text="NanoBot#2520")
         return e
     def error(error):
-        e = discord.Embed(color=discord.Color.red())
-        e.add_field(name="Error", value="That didn't work out as planned.\n`{}`".format(error))
-        e.set_footer(text="Report this at https://discord.gg/eDRnXd6")
+        e = discord.Embed(color=discord.Color.red(), title="Error", description="`{}`\nDon't panic! Our support team can help you at the [NanoBot Discord](https://discord.gg/eDRnXd6).".format(error))
+        e.set_footer(text="NanoBot#2520")
         return e
     def warning(message):
         e = discord.Embed(color=discord.Color.gold())
@@ -484,12 +482,12 @@ class Music:
                 is_dj = True
         users_in_channel = len(ctx.message.server.me.voice.voice_channel.voice_members) - 1
         if state.is_playing() and voter in ctx.message.server.me.voice.voice_channel.voice_members:
+            total_votes = len(state.skip_votes)
             if voter == state.current.requester or is_dj:
                 await self.bot.say(':fast_forward: Skipping song...')
                 state.skip()
             elif (voter.id not in state.skip_votes) or total_votes >= users_in_channel:
                 state.skip_votes.add(voter.id)
-                total_votes = len(state.skip_votes)
                 if total_votes >= users_in_channel:
                     e = discord.Embed()
                     e.title = "Skip Song"
@@ -589,6 +587,33 @@ class Admin:
 
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.command(pass_context=True, hidden=True)
+    async def announce(self, ctx, *, mesg):
+        if ctx.message.author.id in admin_ids:
+            tmp = await self.bot.say("Are you sure you want to send this message to all of NanoBot's servers?")
+            await self.bot.add_reaction(tmp, "👍")
+            await self.bot.add_reaction(tmp, "👎")
+            tmp = await self.bot.wait_for_reaction(emoji=["👍"], user=ctx.message.author, timeout=10, message=tmp)
+            if tmp is None or tmp == None:
+                await self.bot.edit_message()
+            else:
+                tmp = self.bot.say("Sending message to `{}`servers...".format(len(self.bot.servers)))
+                e = discord.Embed(title="Announcement", description=str(mesg))
+                e.set_footer(text="NanoBot#2520")
+                err = 0
+                for s in self.bot.servers:
+                    try:
+                        await self.bot.send_message(s.default_channel, embed=e)
+                    except discord.Forbidden:
+                        pass
+                    except Exception as e:
+                        err += 1
+                        logging.error(str(e))
+                if err > 1:
+                    await self.bot.edit_message(tmp, ":warning: Failed to send message to `{}` servers. Check console for more info.".format(err))
+                else:
+                    await self.bot.edit_message(tmp, ":ok_hand:")
 
     @commands.command(pass_context=True, hidden=True)
     async def embed(self, ctx, ecolor : str, *, content : str):
@@ -883,7 +908,7 @@ class General:
             for server in list(self.bot.servers)[incr:max_incr]:
                 this_percent = (len(server.members) / tot_users) * 100
                 percent += this_percent
-                embed.add_field(name=server.name[:255], value="ID: {} / {} users ({}%)"[:1023].format(server.id, str(len(server.members)), str(this_percent)))
+                embed.add_field(name="> " + server.name[:253], value="ID: {} / {} users ({}%)"[:1023].format(server.id, str(len(server.members)), str(this_percent)))
             await self.bot.send_message(ctx.message.author, embed=embed)
             logging.debug("Added up to {}% of users".format(str(percent)))
             incr += 25
@@ -1233,7 +1258,7 @@ class Status:
         embed.add_field(name=":speech_balloon: Description", value=desc)
         await self.bot.send_message(ctx.message.channel, embed=embed)
 
-bot = commands.Bot(command_prefix=commands.when_mentioned_or(['!!', 'nano ']), description='A music, fun, and moderation bot for Discord.')
+bot = commands.Bot(command_prefix=commands.when_mentioned_or(['!!', 'nano'], description='A music, fun, and moderation bot for Discord.')
 bot.add_cog(Music(bot))
 bot.add_cog(Moderation(bot))
 bot.add_cog(Admin(bot))
@@ -1298,7 +1323,7 @@ async def on_command_error(error, ctx): # When a command error occurrs
 async def on_message(message): # When a message is sent
     global cmds_this_session
     global blocked_ids
-    if message.content.startswith('!!') and not message.content.startswith('!!!') or message.content.startswith('nano'):
+    if (message.content.startswith('!!') and not message.content.startswith('!!!')) or message.content.startswith('nano'):
         if message.author.id in blocked_ids:
             await bot.send_message(message.channel, ":no_entry_sign: You have been banned from using NanoBot.")
         else:
