@@ -32,6 +32,7 @@ from tkinter import messagebox
 import concurrent.futures
 import overwatchpy
 import math
+import requests
 # import atexit
 
 def check():
@@ -55,7 +56,16 @@ partnered_servers = []
 admin_ids = []
 blocked_ids = []
 staff = []
-badges = {'partner':'<:partner:335963561106866178>', 'staff':'<:staff:314068430787706880>'}
+badges = {'partner':'<:partner:335963561106866178>',
+'staff':'<:staff:314068430787706880>',
+'bronze':'<:ow_bronze:338113846432628736>',
+'silver':'<:ow_silver:338113846734618624>',
+'gold':'<:ow_gold:338113846533292042>',
+'platinum':'<:ow_platinum:338113846550200331>',
+'diamond':'<:ow_diamond:338113846172450818>',
+'master':'<:ow_master:338113846377971719>',
+'grandmaster':'<:ow_grandmaster:338113846503931905>'}
+
 class mp_thumbnails:
     dorado = 'http://www.owfire.com/images/maps/dorado-3.jpg'
     eichenwalde = 'http://media1.gameinformer.com/imagefeed/screenshots/Overwatch/OW_Eichenwalde_17.jpg'
@@ -122,11 +132,11 @@ class color:
 
 class embeds:
     def fatal(error):
-        e = discord.Embed(color=discord.Color.red(), title="Fatal Error", description="`{}`\nDon't panic! Our support team can help you at the [NanoBot Discord](https://discord.gg/eDRnXd6).\n*(Error: Division by 0)*".format(error))
+        e = discord.Embed(color=discord.Color.red(), title="Fatal Error", description="`{}`\nDon't panic! Our support team can help you at the [NanoBot Discord](https://discord.gg/eDRnXd6).".format(error))
         e.set_footer(text="NanoBot#2520")
         return e
     def error(error):
-        e = discord.Embed(color=discord.Color.red(), title="Error", description="`{}`\nDon't panic! Our support team can help you at the [NanoBot Discord](https://discord.gg/eDRnXd6).\n*(Error 404: Sarcasm module not found)*".format(error))
+        e = discord.Embed(color=discord.Color.red(), title="Error", description="`{}`\nDon't panic! Our support team can help you at the [NanoBot Discord](https://discord.gg/eDRnXd6).".format(error))
         e.set_footer(text="NanoBot#2520")
         return e
     def warning(message):
@@ -745,11 +755,13 @@ class Admin:
             await self.bot.say(embed=e)
 
     @commands.command(pass_context=True, hidden=True)
-    async def say(self, ctx, *, mesg : str):
+    async def say(self, ctx, channel, *, mesg : str):
         if str(ctx.message.author.id) in admin_ids:
-            await self.bot.say(mesg)
-            logging.debug("Said \"{}\"".format(mesg))
-            await self.bot.delete_message(ctx.message)
+            if channel == "~":
+                await self.bot.say(mesg)
+                await self.bot.delete_message(ctx.message)
+            else:
+                await self.bot.send_message(self.bot.get_channel(id=channel), mesg)
 
     @commands.command(pass_context=True, hidden=True)
     async def eval(self, ctx, *, _eval : str): # !!eval
@@ -1392,6 +1404,29 @@ class Overwatch:
     @commands.command(pass_context=True)
     async def event(self, ctx, *, name = None):
         await self.bot.send_typing(ctx.message.channel)
+
+    @commands.command(pass_context=True)
+    async def profile(self, ctx, *, user):
+        await self.bot.send_typing(ctx.message.channel)
+        qu = user.replace('#', '-')
+        r = requests.get('https://owapi.net/api/v3/u/{}/stats'.format(qu), headers={"user-agent":"NanoBot/{}".format(version)})
+        try:
+            c = r.json()["us"]["stats"]["competitive"]["overall_stats"]
+            q = r.json()["us"]["stats"]["quickplay"]["overall_stats"]
+        except KeyError:
+            await self.bot.say(":no_entry_sign: Couldn't find any stats in the `US` region.")
+        if r.status_code == 200:
+            e = discord.Embed(color=0xFC9A23, title="{}'s Overwatch Profile".format(user))
+            e.add_field(name="Level", value=c['level'])
+            e.add_field(name="Competitive Rank", value="{} {}".format(badges[c['tier']], c['comprank']))
+            e.add_field(name="Games Played", value="**• Competitive:** {}\n**• Quick Play:** {}".format(c['games'], q['games']))
+            e.add_field(name="Wins/Losses", value="**> Competitive**\n{} Wins / {} Losses ({}%)\n**> Quick Play**\n{} Wins / {} Losses ({}%)".format(c['wins'], c['losses'], c['win_rate'], q['wins'], q['losses'], q['win_rate']))
+            e.set_thumbnail(url=q['avatar'])
+            await self.bot.say(embed=e)
+        elif r.status_code == 404:
+            await self.bot.say("The user `{}` wasn't found.".format(user))
+        else:
+            await self.bot.say(embed=embeds.error("Request returned status code " + str(r.status_code)))
 
     @commands.command(pass_context=True)
     async def hero(self, ctx, *, name):

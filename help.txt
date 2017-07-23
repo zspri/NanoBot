@@ -29,5 +29,9 @@
 !!stop - Leave the current voice channel
 !!skip - Skips the current song
 !!playing - Shows the current song
+[4]: Overwatch
+!!hero <hero> - Shows info on the specified hero
+!!map <map> - Shows info on the specified map
+!!profile <battletag> - Shows Overwatch profile for specified user
 ```
 Join the server for help and updates: https://discord.gg/eDRnXd6
