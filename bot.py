@@ -612,41 +612,41 @@ class Moderation:
     @commands.check(ismod)
     async def ban(self, ctx, user : discord.Member, *, reason : str = "*No reason was provided.*"):
         try:
-            await self.bot.send_message(user, "You were banned from **{}** by the moderator **{}** for the reason: `{}`".format(ctx.message.server.name, ctx.message.author, reason))
+            await self.bot.send_message(user, "You were banned from **{}** by the moderator **{}** for the reason: {}".format(ctx.message.server.name, ctx.message.author, reason))
             await self.bot.ban(user, delete_message_days=0)
+            try:
+                for channel in ctx.message.server.channels:
+                    if channel.name == "mod-log" or channel.name == "mod_log":
+                        await self.bot.send_message(channel, embed=embeds.user_ban(ctx.message.author, user, reason, uuid.uuid4()))
+                        break
+            except:
+                await self.bot.say("**ProTip:** Having a channel named `#mod_log` or `#mod-log` will allow me to post moderation info.")
         except discord.Forbidden:
             await self.bot.say(embed=embeds.error("I don't have the correct permissions to do that."))
         except:
             raise
         else:
             await self.bot.say("Successfully banned " + str(user))
-        try:
-            for channel in ctx.message.server.channels:
-                if channel.name == "mod-log" or channel.name == "mod_log":
-                    await self.bot.send_message(channel, embed=embeds.user_ban(ctx.message.author, user, reason, uuid.uuid4()))
-                    break
-        except discord.Forbidden:
-            await self.bot.say("**ProTip:** Having a channel named `#mod_log` or `#mod-log` will allow me to post moderation info.")
 
     @commands.command(pass_context=True, no_pm=True)
     @commands.check(ismod)
     async def kick(self, ctx, user : discord.Member, *, reason : str = "*No reason was provided.*"):
         try:
-            await self.bot.send_message(user, "You were kicked from **{}** by the moderator **{}** for the reason: `{}`".format(ctx.message.server.name, ctx.message.author, reason))
+            await self.bot.send_message(user, "You were kicked from **{}** by the moderator **{}** for the reason: {}".format(ctx.message.server.name, ctx.message.author, reason))
             await self.bot.kick(user)
+            try:
+                for channel in ctx.message.server.channels:
+                    if channel.name == "mod-log" or channel.name == "mod_log":
+                        await self.bot.send_message(channel, embed=embeds.user_kick(ctx.message.author, user, reason, uuid.uuid4()))
+                        break
+            except:
+                await self.bot.say("**ProTip:** Having a channel named `#mod_log` or `#mod-log` will allow me to post moderation info.")
         except discord.Forbidden:
             await self.bot.say(embed=embeds.error("I don't have the correct permissions to do that."))
         except:
             raise
         else:
             await self.bot.say("Successfully kicked " + str(user))
-        try:
-            for channel in ctx.message.server.channels:
-                if channel.name == "mod-log" or channel.name == "mod_log":
-                    await self.bot.send_message(channel, embed=embeds.user_kick(ctx.message.author, user, reason, uuid.uuid4()))
-                    break
-        except:
-            await self.bot.say("**ProTip:** Having a channel named `#mod_log` or `#mod-log` will allow me to post moderation info.")
 
 class Admin:
 
