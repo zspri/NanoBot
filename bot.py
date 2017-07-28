@@ -653,6 +653,74 @@ class Admin:
     def __init__(self, bot):
         self.bot = bot
 
+    def isadmin(ctx):
+        passed = False
+        for role in ctx.message.author.roles:
+            if role.name.lower() == "nanobot admin" or role.name.lower() == "administrator" or role.name.lower() == "admin" or role.name.lower() == "discord admin":
+                passed = True
+        return passed
+
+    @commands.group(pass_context=True, no_pm=True)
+    @commands.check(isadmin)
+    async def cmd(self, ctx):
+        if ctx.invoked_subcommand is None:
+            await self.bot.say("Type `!!cmd help` for proper usage.")
+
+    @cmd.command(no_pm=True, name="help")
+    @commands.check(isadmin)
+    async def _help(self):
+        await self.bot.say("""
+        ```markdown
+        < Custom Commands >
+        !!cmd help - Shows this message
+        !!cmd add <name> <value> - Creates a custom command named <name> and says <value> when executed.
+        !!cmd edit <name> <new_value> - Edits the <name> command to have a new value of <new_value>. *Command must already exist!*
+        !!cmd del <name> - Deletes the custom command named <name>.
+        """)
+
+    @cmd.command(pass_context=True, no_pm=True)
+    @commands.check(isadmin)
+    async def add(self, ctx, name : str, *, value : str):
+        global custom_cmds
+        if name == "help" or name == "info":
+            await self.bot.say(":no_entry_sign: You cannot overwrite that command.")
+        else:
+            try:
+                custom_cmds[ctx.message.server.id][name] = value
+            except KeyError:
+                custom_cmds[ctx.message.server.id] = {}
+                custom_cmds[ctx.message.server.id][name] = value
+            await self.bot.say(":ok_hand: Created a custom command named `{}` with the value `{}`".format(name, value))
+
+    @cmd.command(pass_context=True, no_pm=True)
+    @commands.check(isadmin)
+    async def edit(self, ctx, name : str, *, value : str):
+        global custom_cmds
+        try:
+            if custom_cmds[ctx.message.server.id][name] is not None:
+                custom_cmds[ctx.message.server.id][name] = value
+        except KeyError:
+            await self.bot.say(":no_entry_sign: That custom command doesn't exist.")
+        else:
+            await self.bot.say(":ok_hand: Edited the custom value for the `{}` command to be `{}`".format(name, value))
+
+    @cmd.command(pass_context=True, no_pm=True, name="del")
+    @commands.check(isadmin)
+    async def _del(self, ctx, name : str):
+        global custom_cmds
+        try:
+            if custom_cmds[ctx.message.server.id][name] is not None:
+                del custom_cmds[ctx.message.server.id][name]
+        except KeyError:
+            await self.bot.say(":no_entry_sign: That custom command doesn't exist.")
+        else:
+            await self.bot.say(":ok_hand: Deleted the custom value for the `{}` command".format(name))
+
+class Owner:
+
+    def __init__(self, bot):
+        self.bot = bot
+
     @commands.group(hidden=True)
     async def config(self):
         pass
@@ -1560,6 +1628,7 @@ logging.debug('Adding cogs...')
 bot.add_cog(Music(bot))
 bot.add_cog(Moderation(bot))
 bot.add_cog(Admin(bot))
+bot.add_cog(Owner(bot))
 bot.add_cog(General(bot))
 bot.add_cog(YouTube(bot))
 bot.add_cog(Status(bot))
@@ -1594,7 +1663,10 @@ async def on_command_error(error, ctx): # When a command error occurrs
     if isinstance(error, discord.ext.commands.errors.CommandNotFound):
         pass
     elif isinstance(error, discord.ext.commands.errors.CheckFailure):
-        await bot.send_message(ctx.message.channel, embed=embeds.permission_denied())
+        if str(ctx.command).startswith("cmd"):
+            await bot.send_message(ctx.message.channel, embed=embeds.permission_denied("You need a role named `Admin` to do that."))
+        else:
+            await bot.send_message(ctx.message.channel, embed=embeds.permission_denied())
     elif isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
         await bot.send_message(ctx.message.channel, embed=embeds.invalid_syntax("You're missing required arguments!"))
     elif isinstance(error, TimeoutError):
@@ -1622,15 +1694,24 @@ async def on_command_error(error, ctx): # When a command error occurrs
 @bot.event
 async def on_message(message): # When a message is sent
     global cmds_this_session
+    global custom_cmds
     global blocked_ids
     if (message.content.startswith('!!') and not message.content.startswith('!!!')) or message.content.startswith('nano'):
         if message.author.id in blocked_ids:
             await bot.send_message(message.channel, ":no_entry_sign: You have been banned from using NanoBot.")
         else:
-            await logger.info(str(message.author) + "/" + str(message.author.id) + " -> " + message.content)
             logger = logging.getLogger("{} ({})".format(str(message.author.id), str(message.author)))
             logger.info(message.content)
             cmds_this_session.append(message.content)
+            ccmds = None
+            try:
+                ccmds = custom_cmds[message.server.id]
+            except KeyError:
+                pass
+            else:
+                for c in ccmds.keys():
+                    if message.content == "!!" + c or message.content == "nano " + c:
+                        await bot.send_message(message.channel, ccmds[c])
             if message.content == "!!" or message.content == "nano":
                 await bot.send_message(message.channel, ":thinking: Why did you even think that would work? Type `!!help` for help.")
             elif message.content == "!!help" or message.content == "nano help":
