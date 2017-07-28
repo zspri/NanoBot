@@ -676,6 +676,7 @@ class Admin:
         !!cmd add <name> <value> - Creates a custom command named <name> and says <value> when executed.
         !!cmd edit <name> <new_value> - Edits the <name> command to have a new value of <new_value>. *Command must already exist!*
         !!cmd del <name> - Deletes the custom command named <name>.
+        ```
         """)
 
     @cmd.command(pass_context=True, no_pm=True)
@@ -1082,26 +1083,43 @@ class General:
         embed.set_thumbnail(url=user.avatar_url)
         await self.bot.send_message(ctx.message.channel, embed=embed)
 
-    @commands.command(pass_context=True)
+    @commands.command(pass_context=True, aliases=["guilds"])
     async def servers(self, ctx): # !!servers
-        await self.bot.add_reaction(ctx.message, "📬")
-        incr = 0
-        percent = 0
-        max_incr = 24
-        tot_users = sum(1 for _ in self.bot.get_all_members())
-        for page in range(1, math.ceil(len(self.bot.servers) / 24) + 1): # 25 fields max in each embed, but for reasons we'll choose 24
-            await self.bot.send_typing(ctx.message.author)
-            embed = discord.Embed(color=ctx.message.server.me.color)
-            embed.title = "NanoBot Servers (Page {}/{})".format(str(page), str(math.ceil(len(self.bot.servers) / 24)))
-            embed.set_footer(text="{} servers / {} users".format(self.bot.servers, tot_users), icon_url=ctx.message.author.avatar_url)
-            for server in list(self.bot.servers)[incr:max_incr]:
-                this_percent = (len(server.members) / tot_users) * 100
-                percent += this_percent
-                embed.add_field(name="> " + server.name[:253], value="ID: {} / {} users ({}%)"[:1023].format(server.id, str(len(server.members)), str(this_percent)))
-            await self.bot.send_message(ctx.message.author, embed=embed)
-            logging.debug("Added up to {}% of users".format(str(percent)))
-            incr += 25
-            max_incr += 24
+        await self.bot.send_typing(ctx.message.channel)
+        e = discord.Embed(color=discord.Color(0x7289DA), title="NanoBot Guilds", description="An average guild has...")
+        tot = len(self.bot.servers)
+        roles = []
+        verification = 0
+        for s in bot.servers:
+            if str(s.verification_level) == "low":
+                verification += 1
+            elif str(s.verification_level) == "medium":
+                verification += 2
+            elif str(s.verification_level) == "high":
+                verification += 3
+            elif str(s.verification_level) == 4:
+                verification += 4
+            for r in s.roles:
+                roles.append(r)
+        e.add_field(name="Users", value=sum(1 for _ in self.bot.get_all_members()) / tot)
+        e.add_field(name="Channels", value=sum(1 for _ in self.bot.get_all_channels()) / tot)
+        e.add_field(name="Emojis", value=sum(1 for _ in self.bot.get_all_emojis()) / tot)
+        e.add_field(name="Roles", value=len(roles) / tot)
+        e.set_footer(text="{} guilds total".format(tot))
+        verification = verification / tot
+        verif_name = None
+        if round(verification) == 0:
+            verif_name = "None"
+        elif round(verification) == 1:
+            verif_name = "Low"
+        elif round(verification) == 2:
+            verif_name = "Medium"
+        elif round(verification) == 3:
+            verif_name = "High / (╯°□°）╯︵ ┻━┻"
+        elif round(verification) == 4:
+            verif_name = "Extreme / ┻━┻ ﾐヽ(ಠ益ಠ)ノ彡┻━┻"
+        e.add_field(name="Verification", value="{} ({})".format(verification, verif_name))
+        await self.bot.say(embed=e)
 
     def getdog():
         dog = urllib.request.urlopen('https://random.dog/woof')
@@ -1181,7 +1199,7 @@ class General:
             embed.add_field(name="> Voice", value="**• Active Sessions:** {}\n**• Songs Played:** {}".format(len(self.bot.voice_clients), len(songs_played)))
             embed.add_field(name="> Version", value="**• Framework:** {}\n**• discord.py:** {}\n**• Python:** {}".format(version, discord.__version__, pyver))
             embed.add_field(name="> Misc", value="**• Website:** http://bot.nanomotion.xyz\n**• Discord:** https://discord.gg/eDRnXd6")
-            logger.debug("Created Embed")
+            logging.debug("Created Embed")
             await self.bot.say(embed=embed)
         except:
             raise
@@ -1471,6 +1489,7 @@ class Overwatch:
         !!overwatch event <name|id> - Shows an event by name or id
         !!overwatch hero <name> - Shows a hero by name
         !!overwatch map <name|id> - Shows a map by name or id
+        ```
         """)
 
     @overwatch.command(pass_context=True)
