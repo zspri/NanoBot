@@ -6,7 +6,7 @@
 ##########################################
 
 import logging
-logging.basicConfig(format='(%(levelname)s) [%(asctime)s] %(name)s: %(message)s', level=logging.INFO, datefmt='%I:%M:%S %p')
+logging.basicConfig(format='[%(asctime)s/%(levelname)s] %(name)s: %(message)s', level=logging.INFO, datefmt='%I:%M:%S %p')
 import importlib
 import discord
 import asyncio
@@ -35,6 +35,34 @@ import math
 import requests
 # import atexit
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-v", "--verbose", help="Change logger level to logging.DEBUG instead of logging.INFO", action="store_true")
+    parser.add_argument("-ver", "--version", help="Prints the application version", action="store_true")
+    parser.add_argument("-sptest", "--speedtest", help="Pings gateway.discord.gg", action="store_true")
+    parser.add_argument("-m", "--maintenance", help="Runs the bot in maintenance mode", action="store_true")
+    parser.add_argument("-gtoken", "--gapi-token", help="Runs the bot with a custom Google API token")
+    parser.add_argument("-nc", "--no-color", help="Runs the bot without logger colors", action="store_true")
+    args = parser.parse_args()
+    if args.version:
+        print(version)
+        sys.exit(0)
+    elif args.speedtest:
+        sys.exit(x)
+    elif args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+        logging.debug("Logging level set to DEBUG")
+    elif args.maintenance:
+        x = os.system('python maintenance.py')
+        sys.exit(x)
+    if args.gapi_token:
+        DEVELOPER_KEY = args.gapi_token
+    if args.no_color:
+        color.BLUE = ""
+        color.YELLOW = ""
+        color.RED = ""
+        color.GREEN = ""
+
 def check():
     i = ctypes.c_char('a')
     j = ctypes.pointer(i)
@@ -50,12 +78,14 @@ async def post_stats(bot):
     await aiohttp.request("post", "https://bots.discord.pw/api/bots/{}/stats".format(str(bot.id)), data=json.dumps(payload), headers=headers)
 
 os.chdir('data')
+logging.debug("Setting up configuration...")
 
 partners = []
 partnered_servers = []
 admin_ids = []
 blocked_ids = []
 staff = []
+custom_cmds = {}
 badges = {'partner':'<:partner:335963561106866178>',
 'staff':'<:staff:314068430787706880>',
 'bronze':'<:ow_bronze:338113846432628736>',
@@ -201,23 +231,9 @@ class embeds:
         e.add_field(name="Moderator", value=str(author))
         e.add_field(name="Reason", value=str(reason))
         return e
+logging.debug('done')
 
-class logger:
-    def debug(msg):
-        logging.debug(msg)
-    async def info(msg):
-        logging.info(msg)
-        #await bot.send_message(bot.get_channel(id="329608444728442881"), "```\n----- INFO ({0.tm_hour}:{0.tm_min}.{0.tm_sec}) -----\n\n{1}```".format(time.localtime(time.time()), msg))
-    async def warn(msg):
-        logging.warn(msg)
-        #await bot.send_message(bot.get_channel(id="329608444728442881"), "```\n----- WARNING ({0.tm_hour}:{0.tm_min}.{0.tm_sec}) -----\n\n{1}```".format(time.localtime(time.time()), msg))
-    async def error(msg):
-        logging.error(msg)
-        #await bot.send_message(bot.get_channel(id="329608444728442881"), "```py\n----- ERROR ({0.tm_hour}:{0.tm_min}.{0.tm_sec}) -----\n\n{1}```".format(time.localtime(time.time()), msg))
-    async def fatal(msg):
-        logging.fatal(msg)
-        #await bot.send_message(bot.get_channel(id="329608444728442881"), "```py\n----- FATAL ({0.tm_hour}:{0.tm_min}.{0.tm_sec}) -----\n\n{1}```".format(time.localtime(time.time()), msg))
-
+logging.debug('Defining commands...')
 def queue_get_all(q, m=10):
     items = []
     maxItemsToRetreive = m
@@ -234,34 +250,6 @@ def queue_get_all(q, m=10):
         except:
             break
     return items
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-v", "--verbose", help="Change logger level to await logger.DEBUG instead of await logger.INFO", action="store_true")
-    parser.add_argument("-ver", "--version", help="Prints the application version", action="store_true")
-    parser.add_argument("-sptest", "--speedtest", help="Pings gateway.discord.gg", action="store_true")
-    parser.add_argument("-m", "--maintenance", help="Runs the bot in maintenance mode", action="store_true")
-    parser.add_argument("-gtoken", "--gapi-token", help="Runs the bot with a custom Google API token")
-    parser.add_argument("-nc", "--no-color", help="Runs the bot without logger colors", action="store_true")
-    args = parser.parse_args()
-    if args.version:
-        print(version)
-        sys.exit(0)
-    elif args.speedtest:
-        sys.exit(x)
-    elif args.verbose:
-        logging.basicConfig(level=logging.DEBUG)
-        logging.debug("Logging level set to DEBUG")
-    elif args.maintenance:
-        x = os.system('start maintenance.py')
-        sys.exit(x)
-    if args.gapi_token:
-        DEVELOPER_KEY = args.gapi_token
-    if args.no_color:
-        color.BLUE = ""
-        color.YELLOW = ""
-        color.RED = ""
-        color.GREEN = ""
 
 class VoiceEntry:
     def __init__(self, message, player):
@@ -318,8 +306,8 @@ class VoiceState:
                 pass
             except Exception as e:
                 await self.bot.say(embed=embeds.error(str(e)))
-                await logger.error(str(e))
-                await logger.error(traceback.format_exc())
+                logging.error(str(e))
+                logging.error(traceback.format_exc())
 
 def checkVoiceState(bot):
     if not bot.id == "294210459144290305":
@@ -376,7 +364,7 @@ class Music:
         except discord.errors.InvalidArgument:
             await self.bot.say(embed=embeds.invalid_syntax("{} is not a valid voice channel.".format(ctx.message.author.voice_channel)))
         except Exception as e:
-            await logger.error(str(e))
+            logging.error(str(e))
             await self.bot.say(embed=embeds.error("I couldn't connect to that voice channel."))
             errors += 1
         else:
@@ -428,7 +416,7 @@ class Music:
                 player = await state.voice.create_ytdl_player(song, ytdl_options=opts, after=state.toggle_next, before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5")
             except OSError as e:
                 errors += 1
-                await logger.fatal(str(e))
+                logging.fatal(str(e))
                 await self.bot.say(embed=embeds.fatal(str(e)))
             except youtube_dl.utils.GeoRestrictedError:
                 await self.bot.say(embed=errors.error("This video is not available in your country."))
@@ -436,15 +424,15 @@ class Music:
                 await self.bot.say("An error occurred while downloading this video: {}".format(str(e)))
             except Exception as e:
                 e = str(e)
-                await logger.error(e)
-                await logger.error(traceback.format_exc())
+                logging.error(e)
+                logging.error(traceback.format_exc())
                 await self.bot.say(embed=embeds.error(e))
             else:
                 player.volume = 0.6
                 try:
                     entry = VoiceEntry(ctx.message, player)
                 except Exception as e:
-                    await logger.error(str(e))
+                    logging.error(str(e))
                     errors += 1
                     await self.bot.say(embed=embeds.fatal(str(e)))
                 else:
@@ -598,7 +586,6 @@ class Moderation:
                 passed = True
         return passed
 
-
     @commands.command(pass_context=True, no_pm=True, aliases=['purge', 'clear'])
     @commands.check(ismod)
     async def prune(self, ctx, limit : int): # !!prune
@@ -616,7 +603,7 @@ class Moderation:
                     if counter % 5 == 0:
                         await self.bot.send_typing(ctx.message.channel)
             except Exception as e:
-                await logger.error(str(e))
+                logging.error(str(e))
                 await self.bot.say(embed=embeds.error(str(e)))
             else:
                 await self.bot.say(':zap: Deleted {} messages.'.format(counter))
@@ -777,7 +764,7 @@ class Admin:
                     res = "PermissionError: Request denied."
                 else:
                     res = eval(_eval)
-                    await logger.info("Evaluated " + str(_eval))
+                    logging.info("Evaluated " + str(_eval))
             except Exception as e:
                 res = str(e)
                 err = 1
@@ -811,7 +798,7 @@ class Admin:
                     res = "PermissionError: Request denied."
                 else:
                     res = exec(_eval)
-                    await logger.info("Executed " + str(_eval))
+                    logging.info("Executed " + str(_eval))
             except Exception as e:
                 res = str(e)
                 err = 1
@@ -838,7 +825,7 @@ class Admin:
         else:
             try:
                 await self.bot.change_presence(game=discord.Game(name=game))
-                await logger.info("Set game to " + str(game))
+                logging.info("Set game to " + str(game))
             except Exception as e:
                 await self.bot.say(embed=embeds.error("Failed to set game: {}".format(str(e))))
 
@@ -849,14 +836,14 @@ class Admin:
             await self.bot.say(embed=embeds.permission_denied("You must be a bot admin to do this!"))
         else:
             try:
-                await logger.info('Reloading ' + module + '...')
+                logging.info('Reloading ' + module + '...')
                 exec('importlib.reload(' + module + ')')
                 await self.bot.say('Reloaded module `' + module + '`')
-                await logger.info('Successfully reloaded ' + module)
+                logging.info('Successfully reloaded ' + module)
             except Exception as e:
                 errors += 1
                 await self.bot.say(embed=embeds.error(str(e)))
-                await logger.warn('Failed to reload ' + module)
+                logging.warn('Failed to reload ' + module)
 
     @commands.command(pass_context=True, hidden=True)
     async def setstatus(self, ctx, *, status : str): # !!setstatus
@@ -882,7 +869,7 @@ class Admin:
                     await self.bot.say("Changed status to `streaming` <:streaming:313956277132853248>")
                 else:
                     await self.bot.say(":warning: Invalid status `" + status + "`. Possible values:\n```py\n['online', 'idle', 'away', 'dnd', 'offline', 'invisible', 'streaming']```")
-                await logger.info("Set status to " + str(status))
+                logging.info("Set status to " + str(status))
             except Exception as e:
                 await self.bot.say(embed=embeds.error(str(e)))
 
@@ -959,7 +946,7 @@ class YouTube:
             q = YouTube.search(query)
         except HttpError as e:
             errors += 1
-            await logger.error(str(e))
+            logging.error(str(e))
             await self.bot.say(embed=embeds.error(str(e)))
         else:
             q = q[0]
@@ -1183,8 +1170,8 @@ class General:
                         res = urllib.request.urlopen('https://srhpyqt94yxb.statuspage.io/api/v2/status.json', timeout=15)
                         pg = res.read()
                     except Exception as e:
-                        await logger.error(e)
-                        await logger.error(traceback.format_exc())
+                        logging.error(e)
+                        logging.error(traceback.format_exc())
                         res = e
                         break
                     else:
@@ -1565,7 +1552,11 @@ class Overwatch:
             e.set_image(url=thumb)
             await self.bot.say(embed=e)
 
+logging.debug('done')
+logging.debug('Creating bot...')
 bot = commands.Bot(command_prefix=['!!', 'nano '], description='A music, fun, moderation, and Overwatch bot for Discord.')
+logging.debug('done')
+logging.debug('Adding cogs...')
 bot.add_cog(Music(bot))
 bot.add_cog(Moderation(bot))
 bot.add_cog(Admin(bot))
@@ -1573,7 +1564,9 @@ bot.add_cog(General(bot))
 bot.add_cog(YouTube(bot))
 bot.add_cog(Status(bot))
 bot.add_cog(Overwatch(bot))
+logging.debug('done')
 
+logging.debug('Defining events...')
 @bot.event
 async def on_server_join(server): # When the bot joins a server
     print(color.GREEN + "Joined server " + str(server.id)+ " (" + str(server.name) + ")")
@@ -1587,7 +1580,7 @@ async def on_server_join(server): # When the bot joins a server
 @bot.event
 async def on_server_remove(server): # When the bot leaves a server
     print(color.RED + "Left server " + str(server.id) + " (" + str(server.name) + ")")
-    await logger.info("Left server {0.name} (ID: {0.id})".format(server))
+    logging.info("Left server {0.name} (ID: {0.id})".format(server))
     await bot.send_message(bot.get_channel(id="334385091482484736"), embed=embeds.server_leave(server))
 
 @bot.event
@@ -1621,9 +1614,9 @@ async def on_command_error(error, ctx): # When a command error occurrs
         if ctx.command:
             errors += 1
             _type, _value, _traceback = sys.exc_info()
-            await logger.error(error.original)
+            logging.error(error.original)
             if _traceback is not None:
-                await logger.error(_traceback)
+                logging.error(_traceback)
             await bot.send_message(ctx.message.channel, embed=embeds.error(error))
 
 @bot.event
@@ -1635,6 +1628,8 @@ async def on_message(message): # When a message is sent
             await bot.send_message(message.channel, ":no_entry_sign: You have been banned from using NanoBot.")
         else:
             await logger.info(str(message.author) + "/" + str(message.author.id) + " -> " + message.content)
+            logger = logging.getLogger("{} ({})".format(str(message.author.id), str(message.author)))
+            logger.info(message.content)
             cmds_this_session.append(message.content)
             if message.content == "!!" or message.content == "nano":
                 await bot.send_message(message.channel, ":thinking: Why did you even think that would work? Type `!!help` for help.")
@@ -1653,10 +1648,12 @@ async def on_ready():
     start_time = time.time()
     st_servers = bot.servers
     os.makedirs('data', exist_ok=True)
-    await logger.info("Logged in as {0.name}#{0.discriminator}".format(bot.user))
+    logging.info("Logged in as {0.name}#{0.discriminator}".format(bot.user))
     checkVoiceState(bot.user)
+logging.debug('done')
 
 if __name__ == "__main__":
+    logging.info("Finished with setup")
     logging.info("NanoBot version {0} // build {1}".format(version, build))
     try:
         bot.run(os.getenv('NANOBOT_TOKEN'))
