@@ -1456,11 +1456,29 @@ class Overwatch:
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(pass_context=True)
+    @commands.group(pass_context=True, aliases=['ow'])
+    async def overwatch(self, ctx):
+        if ctx.invoked_subcommand is None:
+            await self.bot.say("Type `!!overwatch help` for proper usage.")
+
+    @overwatch.command(name="help")
+    async def _help(self):
+        await self.bot.say("""
+        ```markdown
+        < Overwatch Commands >
+        !!overwatch help - Shows this message
+        !!overwatch profile <battletag> - Shows Overwatch profile for specified user
+        !!overwatch event <name|id> - Shows an event by name or id
+        !!overwatch hero <name> - Shows a hero by name
+        !!overwatch map <name|id> - Shows a map by name or id
+        """)
+
+    @overwatch.command(pass_context=True)
     async def event(self, ctx, *, name = None):
         await self.bot.send_typing(ctx.message.channel)
+        await self.bot.say("*Work in progress...*")
 
-    @commands.command(pass_context=True)
+    @overwatch.command(pass_context=True)
     async def profile(self, ctx, *, user):
         await self.bot.send_typing(ctx.message.channel)
         qu = user.replace('#', '-')
@@ -1483,7 +1501,7 @@ class Overwatch:
         else:
             await self.bot.say(embed=embeds.error("Request returned status code " + str(r.status_code)))
 
-    @commands.command(pass_context=True)
+    @overwatch.command(pass_context=True)
     async def hero(self, ctx, *, name):
         name = name.lower()
         hero = None
@@ -1540,6 +1558,8 @@ class Overwatch:
             hero = owapi.get_hero(23)
         elif name == "orisa":
             hero = owapi.get_hero(24)
+        elif name == "doomfist":
+            hero = overwatchpy.Hero(25, 'Doomfist', 'Doomfist’s cybernetics make him a highly-mobile, powerful frontline fighter. In addition to dealing ranged damage with his Hand Cannon, Doomfist can slam the ground, knock enemies into the air and off balance, or charge into the fray with his Rocket Punch. When facing a tightly packed group, Doomfist leaps out of view, then crashes down to earth with a spectacular Meteor Strike.', 250, 0, 0, 'Akande Ogundimu', 45, None, 'Talon', 'Oyo, Nigeria', 3, overwatchpy.Role(1, "offense"), None, None, None)
         else:
             await self.bot.say(embed=embeds.invalid_syntax("The requested hero '{}' wasn't found".format(name)))
         if hero is not None:
@@ -1552,11 +1572,11 @@ class Overwatch:
             e.add_field(name="Base of Operations", value=hero.base_of_operations)
             e.add_field(name="Difficulty", value=hero.difficulty)
             e.add_field(name="Role", value=hero.role.name)
-            e.set_footer(text="Tracking 24 Heroes")
+            e.set_footer(text="Tracking 25 Heroes")
             await self.bot.say(embed=e)
 
-    @commands.command(pass_context=True)
-    async def map(self, ctx, *, name = None):
+    @overwatch.command(pass_context=True, name="map")
+    async def _map(self, ctx, *, name = None):
         name = name.lower()
         mp = None
         thumb = None
@@ -1620,6 +1640,11 @@ class Overwatch:
             e.set_image(url=thumb)
             await self.bot.say(embed=e)
 
+class Xbox:
+
+    def __init__(self, bot):
+        self.bot = bot
+
 logging.debug('done')
 logging.debug('Creating bot...')
 bot = commands.Bot(command_prefix=['!!', 'nano '], description='A music, fun, moderation, and Overwatch bot for Discord.')
@@ -1633,6 +1658,7 @@ bot.add_cog(General(bot))
 bot.add_cog(YouTube(bot))
 bot.add_cog(Status(bot))
 bot.add_cog(Overwatch(bot))
+bot.add_cog(Xbox(bot))
 logging.debug('done')
 
 logging.debug('Defining events...')
