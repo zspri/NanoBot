@@ -88,6 +88,7 @@ staff = []
 custom_cmds = {}
 badges = {'partner':'<:partner:335963561106866178>',
 'staff':'<:staff:314068430787706880>',
+'voter':'<:voter:340903213035290627>',
 'bronze':'<:ow_bronze:338113846432628736>',
 'silver':'<:ow_silver:338113846734618624>',
 'gold':'<:ow_gold:338113846533292042>',
@@ -140,8 +141,8 @@ cmds_this_session = []
 songs_played = []
 start_time = None
 st_servers = None
-version = "1.6-beta"
-build = "16076"
+version = "1.7-beta"
+build = "17085"
 _uuid = uuid.uuid1()
 queue = {}
 disabled_cmds = {} # Format: {'command_name', 'reason'}
@@ -149,7 +150,6 @@ errors = 0
 DEVELOPER_KEY = str(os.getenv('GAPI_TOKEN'))
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
-proc_info = os.getenv('PROCESSOR_IDENTIFIER')
 owapi = overwatchpy.OWAPI()
 
 colorama.init(autoreset=True)
@@ -1043,13 +1043,26 @@ class General:
         global staff
         global partners
         global badges
+        badge = ""
+        footer = "ProTip: Get a sweet profile badge and voter status by upvoting NanoBot at https://discordbots.org/bot/294210459144290305"
         if user is None or user == None:
             user = ctx.message.author
-        badge = ""
+        r = requests.get("https://discordbots.org/api/bots/294210459144290305/votes", headers={"Authorization":os.getenv("DBOTSPW_TOKEN")})
+        if r.status_code == 200:
+            r = r.json()
+            for u in r:
+                if u['id'] == user.id:
+                    badge = badges['voter']
+                    footer = "Thank you for voting!"
+        else:
+            logging.error("Failed to get voting info!")
+            await self.bot.say(":no_entry_sign: Failed to get voter info. If you voted, your badge will not show up temporarily.")
         if user.id in staff:
             badge = badges['staff']
+            footer = "NanoBot Staff Member"
         elif user.id in partners:
             badge = badges['partner']
+            footer = "NanoBot Partner"
         """Gets the specified user's info."""
         await self.bot.send_typing(ctx.message.channel)
         stp = user.status
@@ -1065,22 +1078,25 @@ class General:
             stp = ":question:"
         stp2 = ""
         for role in user.roles:
-            if role.name == user.roles[len(user.roles) - 1].name:
-               stp2 = stp2 + role.name
-            else:
-                stp2 = stp2 + role.name + ", "
-        embed = discord.Embed(color=user.color, title="User Info")
-        embed.add_field(name="User", value=str(user) + " {}".format(badge))
-        embed.set_footer(text=user.name + "#" + user.discriminator)
-        embed.add_field(name="Account Created At", value=user.created_at)
-        embed.add_field(name="Roles", value=stp2)
+            if not role == ctx.message.server.default_role:
+                if role.name == user.roles[len(user.roles) - 1].name:
+                   stp2 = stp2 + role.name
+                else:
+                    stp2 = stp2 + role.name + ", "
+        embed = discord.Embed(color=user.color)
+        embed.add_field(name="Username", value=str(user) + " {}".format(badge))
+        embed.add_field(name="Nickname", value=user.nick)
         embed.add_field(name="Status", value=str(user.status) + " " + stp)
-        embed.add_field(name="Nickname", value=user.display_name)
         try:
             embed.add_field(name="Playing", value=user.game.name)
         except:
             embed.add_field(name="Playing", value="(Nothing)")
+        embed.add_field(name="Account Created", value=user.created_at)
+        embed.add_field(name="Joined Guild", value=user.joined_at)
+        embed.add_field(name="Roles", value=stp2)
+        embed.add_field(name="Color", value=str(ctx.message.author.color))
         embed.set_thumbnail(url=user.avatar_url)
+        embed.set_footer(text=footer)
         await self.bot.send_message(ctx.message.channel, embed=embed)
 
     @commands.command(pass_context=True, aliases=["guilds"])
@@ -1176,7 +1192,6 @@ class General:
             global start_time
             global errors
             global st_servers
-            global proc_info
             await self.bot.send_typing(ctx.message.channel)
             pyver = ""
             for x in sys.version_info[0:3]:
@@ -1235,6 +1250,24 @@ class General:
         embed.add_field(name="Custom Emoji", value=len(server.emojis))
         embed.add_field(name="Created At", value=server.created_at)
         await self.bot.send_message(ctx.message.channel, embed=embed)
+
+    @commands.command(name="staff", pass_context=True)
+    async def _staff(self, ctx):
+        global staff
+        global badges
+        global partners
+        global admin_ids
+        e = discord.Embed(color=ctx.message.server.me.color, title="NanoBot Staff")
+        for pid in staff:
+            _badge = ""
+            user = self.bot.get_server("294215057129340938").get_member(pid)
+            if pid in partners:
+                _badge += badges['partner']
+            _badge += badges['staff']
+            if pid in admin_ids:
+                _badge += ":zap:"
+            e.add_field(name=str(user), value=_badge)
+        await self.bot.say(embed=e)
 
     @commands.command(pass_context=True, enabled=False)
     async def ping(self, ctx, *, times=1): # !!ping
