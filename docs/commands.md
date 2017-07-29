@@ -4,8 +4,8 @@
 
 [Permissions Reference](./permissions.md)
 
-| Command Name | Description                                | Usage                     | Category   | Permissions  |
-| ------------ | ------------------------------------------ | ------------------------- | ---------- | ------------ |
+| Command Name | Description                                | Usage                              | Category   | Permissions  |
+| ------------ | ------------------------------------------ | ---------------------------------- | ---------- | ------------ |
 | help         | Shows the help message.                    | !!help                             | General    | NanoBot User  |
 | hello        | Shows an introduction message.             | !!hello                            | General    | NanoBot User  |
 | invite       | Shows a link to invite NanoBot.            | !!invite                           | General    | NanoBot User  |
