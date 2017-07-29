@@ -16,11 +16,11 @@
 | ping         | Shows Discord gateway response time.       | !!ping [times]                     | General    | NanoBot User  |
 | dog          | Shows a random dog.                        | !!dog                              | General    | NanoBot User  |
 | cat          | Shows a random cat.                        | !!cat                              | General    | NanoBot User  |
-| status       | Shows statuspage.io info.                  | !!status <help|[page]>             | General    | NanoBot User  |
+| status       | Shows statuspage.io info.                  | !!status <help/[page]>             | General    | NanoBot User  |
 | prune\*      | Bulk-deletes up to 100 messages.           | !!prune <amount>                   | Moderation | NanoBot Mod   |
 | kick\*       | Kicks a user for a specified reason.       | !!kick <user> [reason]             | Moderation | NanoBot Mod   |
 | ban\*        | Bans a user for a specified reason.        | !!ban <user> [reason]              | Moderation | NanoBot Mod   |
-| cmd          | Custom commands interface.                 | !!cmd <help|add|edit|del>          | Admin      | NanoBot Admin |
+| cmd          | Custom commands interface.                 | !!cmd <help/add/edit/del>          | Admin      | NanoBot Admin |
 | join         | Joins the specified voice channel.         | !!join [channel]                   | Music      | NanoBot User  |
 | summon\*\*   | Joins your voice channel.                  | !!summon                           | Music      | NanoBot User  |
 | play         | Searches⁺ for and plays the entered query. | !!play <query/url⁺>                | Music      | NanoBot User  |
@@ -32,7 +32,7 @@
 | stop         | Stops the player and leaves the channel.   | !!stop                             | Music      | NanoBot User  |
 | skip         | Skips the current song.                    | !!skip                             | Music      | NanoBot User  |
 | playing      | Shows the currently playing song.          | !!playing                          | Music      | NanoBot User  |
-| overwatch    | Overwatch commands.                        | !!ow <help|profile|hero|map|event> | Overwatch  | NanoBot User  |
+| overwatch    | Overwatch commands.                        | !!ow <help/profile/hero/map/event> | Overwatch  | NanoBot User  |
 
 See the `!!help` command for more info.
 
