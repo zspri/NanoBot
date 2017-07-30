@@ -63,14 +63,7 @@ if args.no_color:
     color.GREEN = ""
 
 def check():
-    i = ctypes.c_char('a')
-    j = ctypes.pointer(i)
-    c = 0
-    while True:
-        j[c] = 'a'
-        c += 1
-    j
-
+    pass
 
 async def post_stats():
     await bot.change_presence(game=discord.Game(name='!!help • {} Guilds'.format(len(bot.servers))))
@@ -828,6 +821,23 @@ class Owner:
             else:
                 await self.bot.send_message(self.bot.get_channel(id=channel), mesg)
 
+    @commands.group(pass_context=True)
+    async def request(self, ctx):
+        pass
+
+    @request.command(pass_context=True)
+    async def get(self, ctx, url : str, headers = None):
+        await self.bot.send_typing(ctx.message.channel)
+        if headers is not None:
+            headers = dict([headers.strip('{}').split(":"),])
+        t = time.time()
+        r = requests.get(url, headers=headers)
+        et = (time.time() - t) * 1000
+        e = discord.Embed(color=ctx.message.server.me.color, title="Request", description="Finished in {}ms with HTTP code {}".format(et, r.status_code))
+        e.add_field(name="Return data", value="```\n{}\n```".format(r.text[:1015]))
+        e.set_footer(text=url)
+        await self.bot.say(embed=e)
+
     @commands.command(pass_context=True, hidden=True)
     async def eval(self, ctx, *, _eval : str): # !!eval
         if not str(ctx.message.author.id) in admin_ids:
@@ -1056,7 +1066,7 @@ class General:
         footer = "ProTip: Get a sweet profile badge and voter status by upvoting NanoBot at https://discordbots.org/bot/294210459144290305"
         if user is None or user == None:
             user = ctx.message.author
-        r = requests.get("https://discordbots.org/api/bots/294210459144290305/votes", headers={"Authorization":os.getenv("DBOTSPW_TOKEN")})
+        r = requests.get("https://discordbots.org/api/bots/294210459144290305/votes", headers={"Authorization":os.getenv("DBOTSLIST_TOKEN")})
         if r.status_code == 200:
             r = r.json()
             for u in r:
@@ -1214,15 +1224,15 @@ class General:
             logging.debug("Formatted bot uptime")
             users = sum(1 for _ in self.bot.get_all_members())
             logging.debug("Got all bot users")
-            embed = discord.Embed(color=ctx.message.server.me.color, title="NanoBot Statistics")
+            embed = discord.Embed(color=ctx.message.server.me.color, title="NanoBot Statistics", description="Made by **Der ナノボット#4587**")
             embed.set_footer(text="NanoBot#2520")
             embed.set_thumbnail(url=ctx.message.server.me.avatar_url)
             embed.add_field(name="> Uptime", value=stp)
             embed.add_field(name="> Usage", value="**• Guilds:** {}\n**• Users:** {}".format(len(self.bot.servers), users))
             embed.add_field(name="> Commands", value="**• Total Received:** {}\n**• Errors:** {} ({}%)".format(len(cmds_this_session), errors, round(errors/len(cmds_this_session) * 100)))
             embed.add_field(name="> Voice", value="**• Active Sessions:** {}\n**• Songs Played:** {}".format(len(self.bot.voice_clients), len(songs_played)))
-            embed.add_field(name="> Version", value="**• Framework:** {}\n**• discord.py:** {}\n**• Python:** {}".format(version, discord.__version__, pyver))
-            embed.add_field(name="> Misc", value="**• Website:** http://bot.nanomotion.xyz\n**• Discord:** https://discord.gg/eDRnXd6")
+            embed.add_field(name="> Version", value="**• NanoBot:** {}\n**• discord.py:** {}\n**• Python:** {}".format(version, discord.__version__, pyver))
+            embed.add_field(name="> Misc", value="**• Website:** [Go!](http://bot.nanomotion.xyz)\n**• Discord:** [Join!](https://discord.gg/eDRnXd6)")
             logging.debug("Created Embed")
             await self.bot.say(embed=embed)
         except:
@@ -1273,8 +1283,6 @@ class General:
             if pid in partners:
                 _badge += badges['partner']
             _badge += badges['staff']
-            if pid in admin_ids:
-                _badge += ":zap:"
             e.add_field(name=str(user), value=_badge)
         await self.bot.say(embed=e)
 
@@ -1731,6 +1739,7 @@ logging.debug('Defining events...')
 async def on_server_join(server): # When the bot joins a server
     print(color.GREEN + "Joined server " + str(server.id)+ " (" + str(server.name) + ")")
     logging.info("Joined server {0.name} (ID: {0.id})".format(server))
+    await post_stats()
     try:
         await bot.send_message(server.default_channel, ':wave: Hi, I\'m NanoBot! For help on what I can do, type `!!help`. Join the NanoBot Discord for support and updates: https://discord.io/nano-bot')
     except:
@@ -1741,6 +1750,7 @@ async def on_server_join(server): # When the bot joins a server
 async def on_server_remove(server): # When the bot leaves a server
     print(color.RED + "Left server " + str(server.id) + " (" + str(server.name) + ")")
     logging.info("Left server {0.name} (ID: {0.id})".format(server))
+    await post_stats()
     await bot.send_message(bot.get_channel(id="334385091482484736"), embed=embeds.server_leave(server))
 
 @bot.event
@@ -1818,7 +1828,6 @@ async def on_ready():
     global st_servers
     start_time = time.time()
     st_servers = bot.servers
-    os.makedirs('data', exist_ok=True)
     logging.info("Logged in as {0.name}#{0.discriminator}".format(bot.user))
     checkVoiceState(bot.user)
     await post_stats()
