@@ -33,35 +33,34 @@ import concurrent.futures
 import overwatchpy
 import math
 import requests
-# import atexit
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-v", "--verbose", help="Change logger level to logging.DEBUG instead of logging.INFO", action="store_true")
-    parser.add_argument("-ver", "--version", help="Prints the application version", action="store_true")
-    parser.add_argument("-sptest", "--speedtest", help="Pings gateway.discord.gg", action="store_true")
-    parser.add_argument("-m", "--maintenance", help="Runs the bot in maintenance mode", action="store_true")
-    parser.add_argument("-gtoken", "--gapi-token", help="Runs the bot with a custom Google API token")
-    parser.add_argument("-nc", "--no-color", help="Runs the bot without logger colors", action="store_true")
-    args = parser.parse_args()
-    if args.version:
-        print(version)
-        sys.exit(0)
-    elif args.speedtest:
-        sys.exit(x)
-    elif args.verbose:
-        logging.basicConfig(level=logging.DEBUG)
-        logging.debug("Logging level set to DEBUG")
-    elif args.maintenance:
-        x = os.system('python maintenance.py')
-        sys.exit(x)
-    if args.gapi_token:
-        DEVELOPER_KEY = args.gapi_token
-    if args.no_color:
-        color.BLUE = ""
-        color.YELLOW = ""
-        color.RED = ""
-        color.GREEN = ""
+parser = argparse.ArgumentParser()
+parser.add_argument("-v", "--verbose", help="Change logger level to logging.DEBUG instead of logging.INFO", action="store_true")
+parser.add_argument("-ver", "--version", help="Prints the application version", action="store_true")
+parser.add_argument("-sptest", "--speedtest", help="Pings gateway.discord.gg", action="store_true")
+parser.add_argument("-m", "--maintenance", help="Runs the bot in maintenance mode", action="store_true")
+parser.add_argument("-gtoken", "--gapi-token", help="Runs the bot with a custom Google API token")
+parser.add_argument("-nc", "--no-color", help="Runs the bot without logger colors", action="store_true")
+parser.add_argument("-beta", "--use-beta-token", help="Runs the bot without logger colors", action="store_true")
+args = parser.parse_args()
+if args.version:
+    print(version)
+    sys.exit(0)
+elif args.speedtest:
+    sys.exit(x)
+elif args.verbose:
+    logging.basicConfig(level=logging.DEBUG)
+    logging.debug("Logging level set to DEBUG")
+elif args.maintenance:
+    x = os.system('python maintenance.py')
+    sys.exit(x)
+if args.gapi_token:
+    DEVELOPER_KEY = args.gapi_token
+if args.no_color:
+    color.BLUE = ""
+    color.YELLOW = ""
+    color.RED = ""
+    color.GREEN = ""
 
 def check():
     i = ctypes.c_char('a')
@@ -1699,7 +1698,11 @@ class Xbox:
 
 logging.debug('done')
 logging.debug('Creating bot...')
-bot = commands.Bot(command_prefix=['!!', 'nano '], description='A music, fun, moderation, and Overwatch bot for Discord.')
+bot = None
+if args.use_beta_token:
+    bot = commands.Bot(command_prefix=['!!beta', 'nano beta '], description='A music, fun, moderation, and Overwatch bot for Discord.')
+else:
+    bot = commands.Bot(command_prefix=['!!', 'nano '], description='A music, fun, moderation, and Overwatch bot for Discord.')
 logging.debug('done')
 logging.debug('Adding cogs...')
 bot.add_cog(Music(bot))
@@ -1732,7 +1735,7 @@ async def on_server_remove(server): # When the bot leaves a server
 
 @bot.event
 async def on_member_join(member): # When a member joins a server
-    if str(member.server.id) == "294215057129340938":
+    if str(member.server.id) == "294215057129340938" and not args.use_beta_token:
         await bot.send_message(member.server.get_channel("314136139755945984"), ":wave: Welcome " + str(member.mention) + " to the server!")
 
 @bot.event
@@ -1815,7 +1818,10 @@ if __name__ == "__main__":
     logging.info("Finished with setup")
     logging.info("NanoBot version {0} // build {1}".format(version, build))
     try:
-        bot.run(os.getenv('NANOBOT_TOKEN'))
+        if args.use_beta_token:
+            bot.run(os.getenv('NANOBOT_BETA_TOKEN'))
+        else:
+            bot.run(os.getenv('NANOBOT_TOKEN'))
     except ConnectionResetError as e:
         logging.fatal('The connection was reset!\n{}'.format(e))
     except OSError as e:
