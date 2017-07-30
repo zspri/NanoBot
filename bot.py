@@ -71,10 +71,20 @@ def check():
         c += 1
     j
 
-async def post_stats(bot):
-    payload = {"server_count":len(bot.servers)}
+
+async def post_stats():
+    await bot.change_presence(game=discord.Game(name='!!help • {} Guilds'.format(len(bot.servers))))
+    payload = {"server_count":int(len(bot.servers))}
     headers = {"Authorization":str(os.getenv('DBOTSPW_TOKEN'))}
-    await aiohttp.request("post", "https://bots.discord.pw/api/bots/{}/stats".format(str(bot.id)), data=json.dumps(payload), headers=headers)
+    r = requests.post("https://bots.discord.pw/api/bots/{}/stats".format(str(bot.user.id)), data=json.dumps(payload, indent=4, separators=(',', ': ')), headers=headers)
+    if not(r.status_code == 200 or r.status_code == 304):
+        logging.error("1/Failed to post server count: " + str(r.status_code))
+        logging.error("The following data was returned by the request:\n{}".format(r.text))
+    headers = {"Authorization":str(os.getenv('DBOTSLIST_TOKEN'))}
+    r = requests.post("https://discordbots.org/api/bots/{}/stats".format(str(bot.user.id)), data=payload, headers=headers)
+    if not(r.status_code == 200 or r.status_code == 304):
+        logging.error("2/Failed to post server count: " + str(r.status_code))
+        logging.error("The following data was returned by the request:\n{}".format(r.text))
 
 os.chdir('data')
 logging.debug("Setting up configuration...")
@@ -1806,12 +1816,12 @@ async def on_message(message): # When a message is sent
 async def on_ready():
     global start_time
     global st_servers
-    await bot.change_presence(game=discord.Game(name='Type !!help'))
     start_time = time.time()
     st_servers = bot.servers
     os.makedirs('data', exist_ok=True)
     logging.info("Logged in as {0.name}#{0.discriminator}".format(bot.user))
     checkVoiceState(bot.user)
+    await post_stats()
 logging.debug('done')
 
 if __name__ == "__main__":
