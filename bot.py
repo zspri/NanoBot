@@ -1286,54 +1286,15 @@ class General:
             e.add_field(name=str(user), value=_badge)
         await self.bot.say(embed=e)
 
-    @commands.command(pass_context=True, enabled=False)
+    @commands.command(pass_context=True)
     async def ping(self, ctx, *, times=1): # !!ping
         """Pong!"""
-        global errors
-        try:
-            times = int(times)
-        except:
-            await self.bot.say(embed=embeds.error("Argument 'times' must be an int"))
-        else:
-            if times > 1 and not str(ctx.message.author.id) in admin_ids:
-                await self.bot.say(embed=embeds.permission_denied("You must be a bot admin to do this!"))
-            else:
-                await self.bot.send_typing(ctx.message.channel)
-                start = time.time()
-                res = ""
-                for x in range(0, times):
-                    try:
-                        res = urllib.request.urlopen('https://srhpyqt94yxb.statuspage.io/api/v2/status.json', timeout=15)
-                        pg = res.read()
-                    except Exception as e:
-                        logging.error(e)
-                        logging.error(traceback.format_exc())
-                        res = e
-                        break
-                    else:
-                        res.close()
-                        res = 0
-                _time = round(((time.time() - start) * 1000) / times)
-                embed = discord.Embed()
-                if res == 0:
-                    if _time <= 500:
-                        embed = discord.Embed(color=discord.Color.green())
-                    elif _time <= 1000:
-                        embed = discord.Embed(color=discord.Color.gold())
-                    else:
-                        embed = discord.Embed(color=discord.Color.red())
-                    embed.title = "NanoBot Status"
-                    embed.add_field(name=":outbox_tray: Pong!", value="Round-trip took " + str(_time) + "ms")
-                    embed.set_footer(text="bot.nanomotion.xyz/status")
-                else:
-                    embed = discord.Embed(color=discord.Color.red())
-                    embed.title = "NanoBot Status"
-                    embed.add_field(name=":outbox_tray: Error", value="Ping returned error code `" + str(res) + "` in " + str(_time) + "ms")
-                    errors += 1
-                    embed.set_footer(text="bot.nanomotion.xyz/status")
-                await self.bot.send_message(ctx.message.channel, embed=embed)
+        t = time.time()
+        mesg = await self.bot.say("Pong!")
+        t = time.time() - t
+        await self.bot.edit_message(mesg, "Pong! **{}ms**".format(round(t*1000)))
 
-    @commands.command()
+    @commands.command(aliases=['hi'])
     async def hello(self): # !!hello
         """Hello, world!"""
         await self.bot.say(':wave: Hi, I\'m NanoBot! I can make your Discord server better with all of my features! Type `!!help` for more info, or go to http://bot.nanomotion.xyz')

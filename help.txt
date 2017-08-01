@@ -10,16 +10,17 @@
 !!guild - Shows guild info
 !!guilds - Shows average guild info
 !!ping - Pong!
+[2]: Fun
 !!dog - http://random.dog
 !!cat - http://random.cat
 !!status - Shows statuspage.io info
-[2]: Moderation
+[3]: Moderation
 !!prune <messages> - Deletes the specified amount of messages
 !!kick <user> [reason] - Kick <user> for [reason]. This sends a DM to the user
 !!ban <user> [reason] - Ban <user> for [reason]. This sends a DM to the user
-[3]: Administration
+[4]: Administration
 !!cmd <help|add|edit|del> - Custom commands interface
-[4]: Music
+[5]: Music
 !!join <channel> - Joins the specified channel
 !!summon - Joins your voice channel
 !!play <query> - Plays a song
@@ -31,7 +32,7 @@
 !!stop - Leave the current voice channel
 !!skip - Skips the current song
 !!playing - Shows the current song
-[5]: Overwatch
+[6]: Overwatch
 !!overwatch <help|profile|hero|map|event> - Overwatch commands
 ```
 Join the server for help and updates: https://discord.gg/eDRnXd6
