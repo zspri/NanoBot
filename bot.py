@@ -33,6 +33,7 @@ import concurrent.futures
 import overwatchpy
 import math
 import requests
+import getpass
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-v", "--verbose", help="Change logger level to logging.DEBUG instead of logging.INFO", action="store_true")
@@ -61,9 +62,6 @@ if args.no_color:
     color.YELLOW = ""
     color.RED = ""
     color.GREEN = ""
-
-def check():
-    pass
 
 async def post_stats():
     await bot.change_presence(game=discord.Game(name='!!help • {} Guilds'.format(len(bot.servers))))
@@ -311,10 +309,6 @@ class VoiceState:
                 logging.error(str(e))
                 logging.error(traceback.format_exc())
 
-def checkVoiceState(bot):
-    if not bot.id == "294210459144290305":
-        check()
-
 class Music:
 
     # TODO: "!!repeat" command for audio
@@ -367,8 +361,8 @@ class Music:
             await self.bot.say(embed=embeds.invalid_syntax("{} is not a valid voice channel.".format(ctx.message.author.voice_channel)))
         except Exception as e:
             logging.error(str(e))
+            errors.append(e)
             await self.bot.say(embed=embeds.error("I couldn't connect to that voice channel."))
-            errors += 1
         else:
             await self.bot.say(':notes: Ready to play audio in `' + channel.name + '`')
 
@@ -417,7 +411,7 @@ class Music:
             try:
                 player = await state.voice.create_ytdl_player(song, ytdl_options=opts, after=state.toggle_next, before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5")
             except OSError as e:
-                errors += 1
+                errors.append(e)
                 logging.fatal(str(e))
                 await self.bot.say(embed=embeds.fatal(str(e)))
             except youtube_dl.utils.GeoRestrictedError:
@@ -435,7 +429,7 @@ class Music:
                     entry = VoiceEntry(ctx.message, player)
                 except Exception as e:
                     logging.error(str(e))
-                    errors += 1
+                    errors.append(e)
                     await self.bot.say(embed=embeds.fatal(str(e)))
                 else:
                     try:
@@ -912,7 +906,7 @@ class Owner:
             await self.bot.say(embed=embeds.permission_denied("You must be a bot admin to do this!"))
         else:
             try:
-                await self.bot.change_presence(game=discord.Game(name=game))
+                await self.bot.change_presence(game=discord.Game(name=game), status=ctx.message.server.me.status)
                 logging.info("Set game to " + str(game))
             except Exception as e:
                 await self.bot.say(embed=embeds.error("Failed to set game: {}".format(str(e))))
@@ -929,7 +923,6 @@ class Owner:
                 await self.bot.say('Reloaded module `' + module + '`')
                 logging.info('Successfully reloaded ' + module)
             except Exception as e:
-                errors += 1
                 await self.bot.say(embed=embeds.error(str(e)))
                 logging.warn('Failed to reload ' + module)
 
@@ -1033,7 +1026,7 @@ class YouTube:
         try:
             q = YouTube.search(query)
         except HttpError as e:
-            errors += 1
+            errors.append(e)
             logging.error(str(e))
             await self.bot.say(embed=embeds.error(str(e)))
         else:
@@ -1746,7 +1739,7 @@ async def on_command_error(error, ctx): # When a command error occurrs
         await bot.send_message(ctx.message.channel, embed=embeds.error("This command can't be used in private messages."))
     else:
         if ctx.command:
-            errors += 1
+            errors.append(e)
             _type, _value, _traceback = sys.exc_info()
             logging.error(error.original)
             if _traceback is not None:
@@ -1790,7 +1783,6 @@ async def on_ready():
     start_time = time.time()
     st_servers = bot.servers
     logging.info("Logged in as {0.name}#{0.discriminator}".format(bot.user))
-    checkVoiceState(bot.user)
     await post_stats()
 logging.debug('done')
 
