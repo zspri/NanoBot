@@ -36,7 +36,7 @@ import requests
 import getpass
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-v", "--verbose", help="Change logger level to logging.DEBUG instead of logging.INFO", action="store_true")
+parser.add_argument("-debug", "--debug", help="Change logger level to logging.DEBUG instead of logging.INFO", action="store_true")
 parser.add_argument("-ver", "--version", help="Prints the application version", action="store_true")
 parser.add_argument("-sptest", "--speedtest", help="Pings gateway.discord.gg", action="store_true")
 parser.add_argument("-m", "--maintenance", help="Runs the bot in maintenance mode", action="store_true")
@@ -49,8 +49,8 @@ if args.version:
     sys.exit(0)
 elif args.speedtest:
     sys.exit(x)
-elif args.verbose:
-    logging.basicConfig(level=logging.DEBUG)
+elif args.debug:
+    logging.basicConfig(format='[%(asctime)s/%(levelname)s] %(name)s: %(message)s', level=logging.DEBUG, datefmt='%I:%M:%S %p')
     logging.debug("Logging level set to DEBUG")
 elif args.maintenance:
     x = os.system('python maintenance.py')
