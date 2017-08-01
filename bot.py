@@ -142,11 +142,11 @@ songs_played = []
 start_time = None
 st_servers = None
 version = "1.7-beta"
-build = "17085"
+build = "17095"
 _uuid = uuid.uuid1()
 queue = {}
 disabled_cmds = {} # Format: {'command_name', 'reason'}
-errors = 0
+errors = []
 DEVELOPER_KEY = str(os.getenv('GAPI_TOKEN'))
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
@@ -1483,18 +1483,17 @@ class Overwatch:
         if ctx.invoked_subcommand is None:
             await self.bot.say("Type `!!overwatch help` for proper usage.")
 
-    @overwatch.command(name="help")
-    async def _help(self):
-        await self.bot.say("""
-        ```markdown
-        < Overwatch Commands >
-        !!overwatch help - Shows this message
-        !!overwatch profile <battletag> - Shows Overwatch profile for specified user
-        !!overwatch event <name|id> - Shows an event by name or id
-        !!overwatch hero <name> - Shows a hero by name
-        !!overwatch map <name|id> - Shows a map by name or id
-        ```
-        """)
+    @overwatch.command(pass_context=True, name="help")
+    async def _help(self, ctx):
+        await self.bot.send_typing(ctx.message.channel)
+        e = discord.Embed(title="Overwatch Commands", color=ctx.message.server.me.color)
+        e.add_field(name="!!overwatch help", value="Shows this message.")
+        e.add_field(name="!!overwatch profile <battletag>", value="Shows quick play and competitive stats for the specified battle.net user. E.g. `!!overwatch profile Dad#12262`")
+        e.add_field(name="!!overwatch hero <name>", value="Shows hero info by name. E.g. `!!overwatch hero Genji`")
+        e.add_field(name="!!overwatch map <name|id>", value="Shows map info by name or id. E.g. `!!overwatch map Ilios`")
+        e.add_field(name="!!overwatch event <id>", value="Shows event info by id. E.g. `!!overwatch event 1`")
+        e.set_thumbnail(url="https://cdn.discordapp.com/attachments/314140565329543188/341962877424369667/overwatch-logo.png")
+        await self.bot.say(embed=e)
 
     @overwatch.command(pass_context=True)
     async def event(self, ctx, *, name = None):
@@ -1672,7 +1671,7 @@ logging.debug('done')
 logging.debug('Creating bot...')
 bot = None
 if args.use_beta_token:
-    bot = commands.Bot(command_prefix=['!!beta', 'nano beta '], description='A music, fun, moderation, and Overwatch bot for Discord.')
+    bot = commands.Bot(command_prefix=['!!beta ', 'nano beta '], description='A music, fun, moderation, and Overwatch bot for Discord.')
 else:
     bot = commands.Bot(command_prefix=['!!', 'nano '], description='A music, fun, moderation, and Overwatch bot for Discord.')
 logging.debug('done')
@@ -1770,8 +1769,18 @@ async def on_message(message): # When a message is sent
             if message.content == "!!" or message.content == "nano":
                 await bot.send_message(message.channel, ":thinking: Why did you even think that would work? Type `!!help` for help.")
             elif message.content == "!!help" or message.content == "nano help":
+                e = discord.Embed(title="NanoBot Help", description="For more help, type `!!help <command>` or `!!help <category>`.", color=message.server.me.color)
+                e.add_field(name="> General", value="`!!help`, `!!hello`, `!!invite`, `!!info`, `!!user`, `!!guild`, `!!guilds`, `!!ping`")
+                e.add_field(name="> Fun", value="`!!cat`, `!!dog`                                                                              ​")
+                e.add_field(name="> Moderation", value="`!!prune`, `!!ban`, `!!kick`                                                                 ​")
+                e.add_field(name="> Admin", value="`!!cmd add`, `!!cmd edit`, `!!cmd del`")
+                e.add_field(name="> Music", value="`!!join`, `!!summon`, `!!play`, `!!yt`, `!!queue`, `!!volume`, `!!pause`, `!!resume`, `!!stop`, `!!skip`, `!!playing`")
+                e.add_field(name="> Overwatch", value="`!!ow profile`, `!!ow hero`, `!!ow map`, `!!ow event`")
+                e.set_footer(icon_url=message.author.avatar_url, text="Requested by {}".format(str(message.author)))
+                e.set_thumbnail(url=message.server.me.avatar_url)
                 f = open('help.txt', 'r')
                 await bot.send_message(message.channel, f.read())
+                await bot.send_message(message.channel, embed=e)
                 f.close()
             else:
                 await bot.process_commands(message)
