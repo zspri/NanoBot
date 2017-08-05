@@ -1202,60 +1202,6 @@ class General:
         e.add_field(name="Verification", value="{} ({})".format(verification, verif_name))
         await self.bot.say(embed=e)
 
-    def getdog():
-        dog = urllib.request.urlopen('https://random.dog/woof')
-        dog = str(dog.read())
-        dog = dog[2:]
-        dog = dog[:len(dog) - 1]
-        return dog
-
-    def getcat():
-        cat = urllib.request.urlopen('https://random.cat/meow')
-        cat = str(cat.read())
-        cat = cat[11:]
-        cat = cat[:len(cat) - 3]
-        cat = cat.replace("\\", "")
-        return cat
-
-    @commands.command(pass_context=True)
-    async def dog(self, ctx): # !!dog
-        """Gets a random dog from http://random.dog"""
-        await self.bot.send_typing(ctx.message.channel)
-        color = discord.Color.default()
-        if ctx.message.server is not None:
-            color = ctx.message.server.me.color
-        embed = discord.Embed(color=color)
-        embed.title = "Random Dog"
-
-        dog = "null"
-        while 1:
-            dog = General.getdog()
-            if not dog.endswith(".mp4"):
-                break
-        print("https://random.dog/" + str(dog))
-        embed.set_footer(text="{}".format("http://random.dog/" + str(dog)))
-        embed.set_image(url="http://random.dog/" + str(dog))
-        await self.bot.send_message(ctx.message.channel, embed=embed)
-
-    @commands.command(pass_context=True)
-    async def cat(self, ctx): # !!cat
-        """Gets a random cat from http://random.cat"""
-        await self.bot.send_typing(ctx.message.channel)
-        color = discord.Color.default()
-        if ctx.message.server is not None:
-            color = ctx.message.server.me.color
-        embed = discord.Embed(color=color)
-        embed.title = "Random Cat"
-        cat = "null"
-        while 1:
-            cat = General.getcat()
-            if not cat.endswith(".mp4"):
-                break
-        print(cat)
-        embed.set_footer(text="{}".format(str(cat)))
-        embed.set_image(url=str(cat))
-        await self.bot.send_message(ctx.message.channel, embed=embed)
-
     @commands.command(pass_context=True, no_pm=True, aliases=['botinfo', 'stats'])
     async def info(self, ctx): # !!info
         try:
@@ -1360,6 +1306,79 @@ class General:
     @commands.command(pass_context=True)
     async def invite(self, ctx): # !!invite
         await self.bot.say('{}, you can invite me to your server with this link: https://discordapp.com/oauth2/authorize?client_id=294210459144290305&scope=bot&permissions=405924918'.format(ctx.message.author.mention))
+
+    @commands.command(pass_context=True)
+    async def logs(self, ctx, limit : int = 100): # !!logs
+        await self.bot.send_typing(ctx.message.channel)
+        stp = ""
+        logs = self.bot.logs_from(ctx.message.channel, limit = limit)
+        for msg in logs:
+            stp += """
+            <div class='message' id='{0.id}'>
+            <b>{0.author} at {0.timestamp}</b> ({0.id})<br>
+            <p>{1}</p>
+            </div><br>
+            """.format(msg, msg.clean_content.replace("<", "&lt;").replace(">", "&gt;"))
+        await self.bot.say(embed=discord.Embed(description="[Logs for #{0}](https://nanobot-discord.github.io/logs/?channel_name={0}&logs={1}".format(ctx.message.channel.name, stp[:1800])))
+
+class Fun:
+
+    def __init__(self, bot):
+        self.bot = bot
+
+    def getdog():
+        dog = urllib.request.urlopen('https://random.dog/woof')
+        dog = str(dog.read())
+        dog = dog[2:]
+        dog = dog[:len(dog) - 1]
+        return dog
+
+    def getcat():
+        cat = urllib.request.urlopen('https://random.cat/meow')
+        cat = str(cat.read())
+        cat = cat[11:]
+        cat = cat[:len(cat) - 3]
+        cat = cat.replace("\\", "")
+        return cat
+
+    @commands.command(pass_context=True)
+    async def dog(self, ctx): # !!dog
+        """Gets a random dog from http://random.dog"""
+        await self.bot.send_typing(ctx.message.channel)
+        color = discord.Color.default()
+        if ctx.message.server is not None:
+            color = ctx.message.server.me.color
+        embed = discord.Embed(color=color)
+        embed.title = "Random Dog"
+
+        dog = "null"
+        while 1:
+            dog = General.getdog()
+            if not dog.endswith(".mp4"):
+                break
+        print("https://random.dog/" + str(dog))
+        embed.set_footer(text="{}".format("http://random.dog/" + str(dog)))
+        embed.set_image(url="http://random.dog/" + str(dog))
+        await self.bot.send_message(ctx.message.channel, embed=embed)
+
+    @commands.command(pass_context=True)
+    async def cat(self, ctx): # !!cat
+        """Gets a random cat from http://random.cat"""
+        await self.bot.send_typing(ctx.message.channel)
+        color = discord.Color.default()
+        if ctx.message.server is not None:
+            color = ctx.message.server.me.color
+        embed = discord.Embed(color=color)
+        embed.title = "Random Cat"
+        cat = "null"
+        while 1:
+            cat = General.getcat()
+            if not cat.endswith(".mp4"):
+                break
+        print(cat)
+        embed.set_footer(text="{}".format(str(cat)))
+        embed.set_image(url=str(cat))
+        await self.bot.send_message(ctx.message.channel, embed=embed)
 
 class Status:
 
@@ -1758,6 +1777,7 @@ bot.add_cog(Moderation(bot))
 bot.add_cog(Admin(bot))
 bot.add_cog(Owner(bot))
 bot.add_cog(General(bot))
+bot.add_cog(Fun(bot))
 bot.add_cog(YouTube(bot))
 bot.add_cog(Status(bot))
 bot.add_cog(Overwatch(bot))
@@ -1787,6 +1807,10 @@ async def on_server_remove(server): # When the bot leaves a server
 async def on_member_join(member): # When a member joins a server
     if str(member.server.id) == "294215057129340938" and not args.use_beta_token:
         await bot.send_message(member.server.get_channel("314136139755945984"), ":wave: Welcome " + str(member.mention) + " to the server!")
+
+@bot.event
+async def on_member_ban(member): # When a member is banned from a server
+    pass
 
 @bot.event
 async def on_command_error(error, ctx): # When a command error occurrs
