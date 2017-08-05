@@ -1,6 +1,6 @@
 ##########################################
 # NanoBot                                #
-# Version 1.6-beta                       #
+# Version 1.7-beta                       #
 # Copyright (c) Nanomotion, 2017         #
 # See the LICENSE.txt file for more info #
 ##########################################
@@ -77,7 +77,7 @@ async def post_stats():
     if not(r.status_code == 200 or r.status_code == 304):
         logging.error("2/Failed to post server count: " + str(r.status_code))
         logging.error("The following data was returned by the request:\n{}".format(r.text))
-
+``
 os.chdir('data')
 logging.debug("Setting up configuration...")
 
@@ -804,7 +804,6 @@ class Owner:
             admin_ids = []
             blocked_ids = []
             staff = []
-            badges = {'partner':'<:partner:335963561106866178>', 'staff':'<:staff:314068430787706880>'}
             with open('partners.txt') as f:
                 for line in f:
                     partners.append(line.rstrip('\n'))
@@ -1104,7 +1103,7 @@ class General:
     @commands.command(pass_context=True)
     async def invite(self, ctx): # !!invite
         """Shows a link to invite NanoBot to your server."""
-        await self.bot.say(ctx.message.author.mention + ", you can invite me to a server with this link: http://bot.nanomotion.xyz/invite :wink:")
+        await self.bot.say(ctx.message.author.mention + ", you can invite me to a server with this link: http://bot.nanomotion.xyz/invite")
 
     @commands.command(pass_context=True, no_pm=True, aliases=['userinfo', 'member', 'memberinfo', 'profile'])
     async def user(self, ctx, *, user : discord.User = None): # !!user
@@ -1758,11 +1757,6 @@ class Overwatch:
             e.set_image(url=thumb)
             await self.bot.say(embed=e)
 
-class Xbox:
-
-    def __init__(self, bot):
-        self.bot = bot
-
 logging.debug('done')
 logging.debug('Creating bot...')
 bot = None
@@ -1781,7 +1775,6 @@ bot.add_cog(Fun(bot))
 bot.add_cog(YouTube(bot))
 bot.add_cog(Status(bot))
 bot.add_cog(Overwatch(bot))
-bot.add_cog(Xbox(bot))
 logging.debug('done')
 
 logging.debug('Defining events...')
