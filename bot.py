@@ -1,6 +1,6 @@
 ##########################################
 # NanoBot                                #
-# Version 1.7-beta                       #
+#                                        #
 # Copyright (c) Nanomotion, 2017         #
 # See the LICENSE.txt file for more info #
 ##########################################
@@ -35,6 +35,7 @@ import math
 import requests
 import getpass
 import datetime
+import random
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-debug", "--debug", help="Change logger level to logging.DEBUG instead of logging.INFO", action="store_true")
@@ -77,7 +78,7 @@ async def post_stats():
     if not(r.status_code == 200 or r.status_code == 304):
         logging.error("2/Failed to post server count: " + str(r.status_code))
         logging.error("The following data was returned by the request:\n{}".format(r.text))
-``
+
 os.chdir('data')
 logging.debug("Setting up configuration...")
 
@@ -87,7 +88,8 @@ admin_ids = []
 blocked_ids = []
 staff = []
 custom_cmds = {}
-badges = {'partner':'<:partner:335963561106866178>',
+badges = {
+'partner':'<:partner:335963561106866178>',
 'staff':'<:staff:314068430787706880>',
 'voter':'<:voter:340903213035290627>',
 'retired':'<:retired:343110154834935809>',
@@ -152,10 +154,9 @@ bans = []
 start_time = None
 st_servers = None
 version = "1.7-beta"
-build = "17095"
+build = "17101"
 _uuid = uuid.uuid1()
 queue = {}
-disabled_cmds = {} # Format: {'command_name', 'reason'}
 errors = []
 DEVELOPER_KEY = str(os.getenv('GAPI_TOKEN'))
 YOUTUBE_API_SERVICE_NAME = "youtube"
@@ -186,7 +187,7 @@ class embeds:
     def invalid_syntax(message="You entered something wrong."):
         e = discord.Embed()
         e.add_field(name="Invalid Syntax", value=message)
-        e.set_footer(text="Commands reference: http://nanomotion.xyz/NanoBot/commands.html")
+        e.set_footer(text="Commands reference: http://nanomotion.github.io/NanoBot/commands.html")
         return e
     def permission_denied(message="You need a role named `Moderator` to do that."):
         e = discord.Embed()
@@ -370,9 +371,6 @@ class Music:
         self.bot = bot
         self.voice_states = {}
 
-    def isenabled(ctx):
-        global disabled_cmds
-
     def get_voice_state(self, server):
         state = self.voice_states.get(server.id)
         if state is None:
@@ -397,10 +395,10 @@ class Music:
 
     @commands.command(pass_context=True, no_pm=True)
     async def join(self, ctx, *, channel : discord.Channel = None): # !!join
+        """Joins a voice channel."""
         global errors
         if channel is None:
             channel = ctx.message.author.voice_channel
-        """Joins a voice channel."""
         await self.bot.send_typing(ctx.message.channel)
         try:
             await self.create_voice_client(channel)
@@ -634,6 +632,18 @@ class Moderation:
             if role.name.lower() == "nanobot mod" or role.name.lower() == "moderator" or role.name.lower() == "mod" or role.name.lower() == "discord mod":
                 passed = True
         return passed
+
+    @commands.command(no_pm=True)
+    async def modhelp(self):
+        e = discord.Embed(color=ctx.message.server.me.color, title="Moderation Help")
+        e.add_field(name="!!modhelp", value="Shows help on moderation commands.")
+        e.add_field(name="!!prune <amount>", value="Prunes the last `<amount>` of messages.")
+        e.add_field(name="!!kick <user> [reason]", value="Kicks `<user>` with an optional `[reason]`.")
+        e.add_field(name="!!ban <user> [reason]", value="Bans `<user>` with an optional `[reason]`.")
+        e.set_footer(text="All commands in this category require a role named \"NanoBot Mod\"")
+        e.set_thumbnail(url=self.bot.user.avatar_url)
+        await self.bot.say(embed=e)
+
 
     @commands.command(pass_context=True, no_pm=True, aliases=['purge', 'clear'])
     @commands.check(ismod)
@@ -1100,11 +1110,6 @@ class General:
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(pass_context=True)
-    async def invite(self, ctx): # !!invite
-        """Shows a link to invite NanoBot to your server."""
-        await self.bot.say(ctx.message.author.mention + ", you can invite me to a server with this link: http://bot.nanomotion.xyz/invite")
-
     @commands.command(pass_context=True, no_pm=True, aliases=['userinfo', 'member', 'memberinfo', 'profile'])
     async def user(self, ctx, *, user : discord.User = None): # !!user
         """Gets the specified user's info."""
@@ -1162,6 +1167,7 @@ class General:
 
     @commands.command(pass_context=True, aliases=["guilds"])
     async def servers(self, ctx): # !!servers
+        """Shows info on NanoBot's guilds."""
         await self.bot.send_typing(ctx.message.channel)
         color = discord.Color.default()
         if ctx.message.server is not None:
@@ -1201,10 +1207,10 @@ class General:
         e.add_field(name="Verification", value="{} ({})".format(verification, verif_name))
         await self.bot.say(embed=e)
 
-    @commands.command(pass_context=True, no_pm=True, aliases=['botinfo', 'stats'])
+    @commands.command(pass_context=True, no_pm=True, aliases=['botinfo', 'stats', 'about'])
     async def info(self, ctx): # !!info
+    """Shows bot info."""
         try:
-            """Shows bot info."""
             global start_time
             global errors
             global st_servers
@@ -1224,7 +1230,7 @@ class General:
             color = discord.Color.default()
             if ctx.message.server is not None:
                 color = ctx.message.server.me.color
-            embed = discord.Embed(color=color, title="NanoBot Statistics", description="Made by **Der ナノボット#4587**")
+            embed = discord.Embed(color=color, title="NanoBot Statistics", description="Made by **Der#4587**")
             embed.set_footer(text="NanoBot#2520")
             embed.set_thumbnail(url=self.bot.user.avatar_url)
             embed.add_field(name="> Uptime", value=stp)
@@ -1232,7 +1238,7 @@ class General:
             embed.add_field(name="> Commands", value="**• Total Received:** {}\n**• Errors:** {} ({}%)".format(len(cmds_this_session), len(errors), round(len(errors)/len(cmds_this_session) * 100)))
             embed.add_field(name="> Voice", value="**• Active Sessions:** {}\n**• Songs Played:** {}".format(len(self.bot.voice_clients), len(songs_played)))
             embed.add_field(name="> Version", value="**• NanoBot:** {}\n**• discord.py:** {}\n**• Python:** {}".format(version, discord.__version__, pyver))
-            embed.add_field(name="> Misc", value="**• Website:** [Go!](http://bot.nanomotion.xyz)\n**• Discord:** [Join!](https://discord.gg/eDRnXd6)")
+            embed.add_field(name="> Misc", value="**• Website:** [Go!](https://nanomotion.github.io/pages/bot)\n**• Discord:** [Join!](https://discord.gg/eDRnXd6)")
             logging.debug("Created Embed")
             await self.bot.say(embed=embed)
         except:
@@ -1240,6 +1246,7 @@ class General:
 
     @commands.command(pass_context=True, no_pm=True, aliases=['server', 'guildinfo', 'serverinfo'])
     async def guild(self, ctx): # !!guild
+        """Shows guild info."""
         global partnered_servers
         global badges
         badge = ""
@@ -1272,6 +1279,7 @@ class General:
 
     @commands.command(name="staff", pass_context=True)
     async def _staff(self, ctx):
+        """Shows bot developers."""
         global staff
         global badges
         global partners
@@ -1297,28 +1305,62 @@ class General:
         t2 = time.time() - t
         await self.bot.edit_message(mesg, "Pong! **{}ms**".format(round(t2*1000)))
 
-    @commands.command(aliases=['hi'])
+    @commands.command(aliases=['hi', 'bot'])
     async def hello(self): # !!hello
         """Hello, world!"""
-        await self.bot.say(':wave: Hi, I\'m NanoBot! I can make your Discord server better with all of my features! Type `!!help` for more info, or go to http://bot.nanomotion.xyz')
+        await self.bot.say(':wave: Hi, I\'m NanoBot! I can make your Discord server better with all of my features! Type `!!help` for more info, or go to https://nanobot-discord.github.io')
 
     @commands.command(pass_context=True)
     async def invite(self, ctx): # !!invite
+        """Shows a link to invite NanoBot to a guild."""
         await self.bot.say('{}, you can invite me to your server with this link: https://discordapp.com/oauth2/authorize?client_id=294210459144290305&scope=bot&permissions=405924918'.format(ctx.message.author.mention))
 
     @commands.command(pass_context=True)
     async def logs(self, ctx, limit : int = 100): # !!logs
+        """Gets the latest messages from a channel and compiles them in a text file."""
+        tmp = await self.bot.say(embed=discord.Embed(description=":clock2: Retrieving the last **{} messages**".format(limit)))
         await self.bot.send_typing(ctx.message.channel)
-        stp = ""
-        logs = self.bot.logs_from(ctx.message.channel, limit = limit)
-        for msg in logs:
-            stp += """
-            <div class='message' id='{0.id}'>
-            <b>{0.author} at {0.timestamp}</b> ({0.id})<br>
-            <p>{1}</p>
-            </div><br>
-            """.format(msg, msg.clean_content.replace("<", "&lt;").replace(">", "&gt;"))
-        await self.bot.say(embed=discord.Embed(description="[Logs for #{0}](https://nanobot-discord.github.io/logs/?channel_name={0}&logs={1}".format(ctx.message.channel.name, stp[:1800])))
+        if limit > 1000:
+            await self.bot.edit_message(tmp, embed=discord.Embed(color=discord.Color.red(), description=":x: I can only retrieve less than 1000 messages!"))
+        elif limit < 1:
+            await self.bot.edit_message(tmp, embed=discord.Embed(color=discord.Color.red(), description=":x: I can only retrieve more than 1 message!"))
+        else:
+            stp = "Logs provided by NanoBot#250\n{}\n\n".format("="*28)
+            async for msg in self.bot.logs_from(ctx.message.channel, limit = limit):
+                stp += "{0.author} at {0.timestamp} (ID: {0.id})\n{0.clean_content}\n\n"
+            try:
+                f = open('logs.txt.tmp', 'w')
+                f.write(stp)
+                f.close()
+            except:
+                raise
+            else:
+                await self.bot.send_file(ctx.message.channel, os.path.join(os.getcwd(), "logs.txt.tmp"), filename="logs.txt")
+                os.remove(os.path.join(os.getcwd(), "logs.txt.tmp"))
+
+    @commands.group()
+    async def upvote(self): # !!upvote
+        """Upvote NanoBot!"""
+        e = discord.Embed(description="{0} **[Click Here]({1})** to upvote NanoBot and get **premium features**! {0}".format(badges['voter'], "https://discordbots.org/bot/294210459144290305"))
+        e.set_footer("Type !!upvote features to see the full list.")
+        await self.bot.say(embed=e)
+
+    @upvote.command(name="help")
+    async def _help(self):
+        """Shows help."""
+        color = discord.Color.default()
+        if ctx.message.server is not None:
+            color = ctx.message.server.me.color
+        e = discord.Embed(color=color, title="Upvote Help")
+        e.add_field(name="> How do I upvote NanoBot?", value="Go to [this link]({0}) and press the button named **Upvote**. If the button is disabled, log in to your Discord account via [here]({1}). If the upvote button is green, you're good to go!".format("https://discordbots.org/bot/294210459144290305", "https://discordbots.org/login"))
+        e.add_field(name="> What features are included with the voter status?", value="For starters, get a sweet badge on your user profile like this one: {0}. You'll also get access to a premium music player, and lots more! Type **!!upvote features** to learn more.")
+        e.set_footer(text="{} upvoters".format(len(get_voters())))
+        await self.bot.say(embed=e)
+
+    @upvote.command()
+    async def features(self):
+        """Shows upvoter features."""
+        await self.bot.say(":tools: This command isn't ready yet!")
 
 class Fun:
 
@@ -1352,7 +1394,7 @@ class Fun:
 
         dog = "null"
         while 1:
-            dog = General.getdog()
+            dog = Fun.getdog()
             if not dog.endswith(".mp4"):
                 break
         print("https://random.dog/" + str(dog))
@@ -1371,13 +1413,24 @@ class Fun:
         embed.title = "Random Cat"
         cat = "null"
         while 1:
-            cat = General.getcat()
+            cat = Fun.getcat()
             if not cat.endswith(".mp4"):
                 break
         print(cat)
         embed.set_footer(text="{}".format(str(cat)))
         embed.set_image(url=str(cat))
         await self.bot.send_message(ctx.message.channel, embed=embed)
+
+    @commands.command(name="8ball")
+    async def _8ball(self, *, question : str):
+        """Ask a question."""
+        responses = [["Signs point to yes.", "Yes.", "Without a doubt.", "As I see it, yes.", "You may rely on it.", "It is decidedly so.", "Yes - definitely.", "It is certain.", "Most likely.", "Outlook good."],
+        ["Reply hazy, try again.", "Concentrate and ask again.", "Better not tell you now.", "Cannot predict now.", "Ask again later."],
+        ["My sources say no.", "Outlook not so good.", "Very doubtful.", "My reply is no.", "Don't count on it."]]
+        if "?" in question:
+            await self.bot.say(":8ball:" + random.choice(random.choice(responses)))
+        else:
+            await self.bot.say("That doesn't look like a question.")
 
 class Status:
 
@@ -1386,10 +1439,11 @@ class Status:
 
     @commands.group(pass_context=True)
     async def status(self, ctx): # !!status
-            if ctx.invoked_subcommand is None:
-                f = open('status_help.txt')
-                await self.bot.say(f.read())
-                f.close()
+        """Shows statuspage.io info."""
+        if ctx.invoked_subcommand is None:
+            f = open('status_help.txt')
+            await self.bot.say(f.read())
+            f.close()
 
     @status.command()
     async def help(self):
@@ -1566,11 +1620,13 @@ class Overwatch:
 
     @commands.group(pass_context=True, aliases=['ow'])
     async def overwatch(self, ctx):
+        """Overwatch commands!"""
         if ctx.invoked_subcommand is None:
             await self.bot.say("Type `!!overwatch help` for proper usage.")
 
     @overwatch.command(pass_context=True, name="help")
     async def _help(self, ctx):
+        """Shows help."""
         await self.bot.send_typing(ctx.message.channel)
         color = discord.Color.default()
         if ctx.message.server is not None:
@@ -1586,11 +1642,13 @@ class Overwatch:
 
     @overwatch.command(pass_context=True)
     async def event(self, ctx, *, name = None):
+        """Shows info for an event by name."""
         await self.bot.send_typing(ctx.message.channel)
         await self.bot.say("*Work in progress...*")
 
     @overwatch.command(pass_context=True)
     async def profile(self, ctx, *, user):
+        """Shows info for a battle.net user."""
         await self.bot.send_typing(ctx.message.channel)
         qu = user.replace('#', '-')
         r = requests.get('https://owapi.net/api/v3/u/{}/stats'.format(qu), headers={"user-agent":"NanoBot/{}".format(version)})
@@ -1614,6 +1672,7 @@ class Overwatch:
 
     @overwatch.command(pass_context=True)
     async def hero(self, ctx, *, name):
+        """Shows info on a hero by name."""
         name = name.lower()
         hero = None
         await self.bot.send_typing(ctx.message.channel)
@@ -1691,6 +1750,7 @@ class Overwatch:
 
     @overwatch.command(pass_context=True, name="map")
     async def _map(self, ctx, *, name = None):
+        """Shows info on a map by name or ID."""
         name = name.lower()
         mp = None
         thumb = None
@@ -1871,8 +1931,8 @@ async def on_message(message): # When a message is sent
                     extra += " Please note that some commands can't be used in Direct Messages."
                 e = discord.Embed(title="NanoBot Help", description="For more help, type `!!help <command>` or `!!help <category>`.\nNeed even more help? Our support team can help you at the ***[NanoBot Discord](https://discord.gg/eDRnXd6)***.", color=color)
                 e.add_field(name="> General", value="`!!help`, `!!hello`, `!!invite`, `!!info`, `!!user`, `!!guild`, `!!guilds`, `!!ping`")
-                e.add_field(name="> Fun", value="`!!cat`, `!!dog`                                                                              ​")
-                e.add_field(name="> Moderation", value="`!!prune`, `!!ban`, `!!kick`                                                                 ​")
+                e.add_field(name="> Fun", value="`!!cat`, `!!dog`, `!!8ball`                                                                    ​")
+                e.add_field(name="> Moderation", value="`!!modhelp`, `!!prune`, `!!ban`, `!!kick`                                                                 ​")
                 e.add_field(name="> Admin", value="`!!cmd add`, `!!cmd edit`, `!!cmd del`")
                 e.add_field(name="> Music", value="`!!join`, `!!summon`, `!!play`, `!!yt`, `!!queue`, `!!volume`, `!!pause`, `!!resume`, `!!stop`, `!!skip`, `!!playing`")
                 e.add_field(name="> Overwatch", value="`!!ow profile`, `!!ow hero`, `!!ow map`, `!!ow event`")
