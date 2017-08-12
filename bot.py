@@ -1209,7 +1209,7 @@ class General:
 
     @commands.command(pass_context=True, no_pm=True, aliases=['botinfo', 'stats', 'about'])
     async def info(self, ctx): # !!info
-    """Shows bot info."""
+        """Shows bot info."""
         try:
             global start_time
             global errors
