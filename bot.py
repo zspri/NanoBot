@@ -1929,7 +1929,7 @@ async def on_message(message): # When a message is sent
                     color = message.server.me.color
                 if str(message.channel).startswith("Direct Message with "):
                     extra += " Please note that some commands can't be used in Direct Messages."
-                e = discord.Embed(title="NanoBot Help", description="For more help, type `!!help <command>` or `!!help <category>`.\nNeed even more help? Our support team can help you at the ***[NanoBot Discord](https://discord.gg/eDRnXd6)***.", color=color)
+                e = discord.Embed(title="NanoBot Help", description="For more help, type `!!help <command>` or `!!help <category>`.\nNeed even more help? Our support team can help you at the ***[NanoBot Discord](https://discord.gg/eDRnXd6)***.\n\n*By using NanoBot, you agree to the [Terms and Conditions](https://nanomotion.github.io/pages/faq/policies/).", color=color)
                 e.add_field(name="> General", value="`!!help`, `!!hello`, `!!invite`, `!!info`, `!!user`, `!!guild`, `!!guilds`, `!!ping`")
                 e.add_field(name="> Fun", value="`!!cat`, `!!dog`, `!!8ball`                                                                    ​")
                 e.add_field(name="> Moderation", value="`!!modhelp`, `!!prune`, `!!ban`, `!!kick`                                                                 ​")
