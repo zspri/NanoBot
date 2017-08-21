@@ -154,7 +154,7 @@ bans = []
 start_time = None
 st_servers = None
 version = "1.7-beta"
-build = "17101"
+build = "17104"
 _uuid = uuid.uuid1()
 queue = {}
 errors = []
@@ -1971,16 +1971,26 @@ if __name__ == "__main__":
     except ConnectionResetError as e:
         logging.fatal("The connection was reset!")
         logging.fatal("{}: {}".format(type(e).__name__, e))
+        logging.fatal(traceback.format_exc())
     except OSError as e:
         logging.fatal("A fatal system error occurred!")
         logging.fatal("{}: {}".format(type(e).__name__, e))
+        logging.fatal(traceback.format_exc())
     except Exception as e:
         logging.fatal("Bot session crashed!")
         logging.fatal("{}: {}".format(type(e).__name__, e))
+        logging.fatal(traceback.format_exc())
     except SystemExit as e:
         logging.fatal("Bot session was terminated prematurely!")
         logging.fatal("{}: {}".format(type(e).__name__, e))
+        logging.fatal(traceback.format_exc())
     except KeyboardInterrupt as e:
         logging.fatal("Bot session was terminated prematurely!")
         logging.fatal("{}: {}".format(type(e).__name__, e))
+        logging.fatal(traceback.format_exc())
+    except Exception as e:
+        logging.fatal("Bot session was terminated prematurely!")
+        logging.fatal(traceback.format_exc())
+    else:
+        logging.info("Bot session successfully ended")
     input("Press enter to continue...")
