@@ -66,7 +66,7 @@ if args.no_color:
     color.GREEN = ""
 
 async def post_stats():
-    await bot.change_presence(game=discord.Game(name='!!help • {} Guilds'.format(len(bot.servers))))
+    await bot.change_presence(game=discord.Game(name='!!help • {} Guilds'.format(len(bot.servers))), status=discord.Status.online)
     payload = {"server_count":int(len(bot.servers))}
     headers = {"Authorization":str(os.getenv('DBOTSPW_TOKEN'))}
     r = requests.post("https://bots.discord.pw/api/bots/{}/stats".format(str(bot.user.id)), data=json.dumps(payload, indent=4, separators=(',', ': ')), headers=headers)
