@@ -1338,15 +1338,16 @@ class General:
                 await self.bot.send_file(ctx.message.channel, os.path.join(os.getcwd(), "logs.txt.tmp"), filename="logs.txt")
                 os.remove(os.path.join(os.getcwd(), "logs.txt.tmp"))
 
-    @commands.group()
-    async def upvote(self): # !!upvote
-        """Upvote NanoBot!"""
-        e = discord.Embed(description="{0} **[Click Here]({1})** to upvote NanoBot and get **premium features**! {0}".format(badges['voter'], "https://discordbots.org/bot/294210459144290305"))
-        e.set_footer("Type !!upvote features to see the full list.")
-        await self.bot.say(embed=e)
+    @commands.group(pass_context=True)
+    async def upvote(self, ctx): # !!upvote
+        """Upvote NanoBot to receive special perks!"""
+        if ctx.invoked_subcommand is None:
+            e = discord.Embed(description="{0} **[Click Here]({1})** to upvote NanoBot and get **premium features**! {0}".format(badges['voter'], "https://discordbots.org/bot/294210459144290305"))
+            e.set_footer(text="Type !!upvote features to see the full list.")
+            await self.bot.say(embed=e)
 
-    @upvote.command(name="help")
-    async def _help(self):
+    @upvote.command(name="help", pass_context=True)
+    async def _help(self, ctx):
         """Shows help."""
         color = discord.Color.default()
         if ctx.message.server is not None:
@@ -1923,19 +1924,22 @@ async def on_message(message): # When a message is sent
             if message.content == "!!" or message.content == "nano":
                 await bot.send_message(message.channel, ":thinking: Why did you even think that would work? Type `!!help` for help.")
             elif message.content == "!!help" or message.content == "nano help":
+                await bot.send_typing(message.channel)
                 color = discord.Color.default()
                 extra = ""
                 if message.server is not None:
                     color = message.server.me.color
                 if str(message.channel).startswith("Direct Message with "):
                     extra += " Please note that some commands can't be used in Direct Messages."
-                e = discord.Embed(title="NanoBot Help", description="For more help, type `!!help <command>` or `!!help <category>`.\nNeed even more help? Our support team can help you at the ***[NanoBot Discord](https://discord.gg/eDRnXd6)***.\n\n*By using NanoBot, you agree to the [Terms and Conditions](https://nanomotion.github.io/pages/faq/policies/).", color=color)
+                e = discord.Embed(title="NanoBot Help", description="For more help, type `!!help <command>` or `!!help <category>`.\nNeed even more help? Our support team can help you at the **[NanoBot Discord](https://discord.gg/eDRnXd6)**.", color=color)
                 e.add_field(name="> General", value="`!!help`, `!!hello`, `!!invite`, `!!info`, `!!user`, `!!guild`, `!!guilds`, `!!ping`")
                 e.add_field(name="> Fun", value="`!!cat`, `!!dog`, `!!8ball`                                                                    ​")
                 e.add_field(name="> Moderation", value="`!!modhelp`, `!!prune`, `!!ban`, `!!kick`                                                                 ​")
                 e.add_field(name="> Admin", value="`!!cmd add`, `!!cmd edit`, `!!cmd del`")
                 e.add_field(name="> Music", value="`!!join`, `!!summon`, `!!play`, `!!yt`, `!!queue`, `!!volume`, `!!pause`, `!!resume`, `!!stop`, `!!skip`, `!!playing`")
                 e.add_field(name="> Overwatch", value="`!!ow profile`, `!!ow hero`, `!!ow map`, `!!ow event`")
+                e.add_field(name="Voting", value="Vote for NanoBot [here](https://discordbots.org/bot/294210459144290305) and receive special perks! Type `!!upvote` for more info.")
+                e.add_field(name="Notice", value="*By using NanoBot, you agree to the [Terms and Conditions](https://nanomotion.github.io/pages/faq/policies/).*")
                 e.set_footer(icon_url=message.author.avatar_url, text="Requested by {}{}".format(str(message.author), extra))
                 e.set_thumbnail(url=bot.user.avatar_url)
                 #f = open('help.txt', 'r')
