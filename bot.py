@@ -154,7 +154,7 @@ bans = []
 start_time = None
 st_servers = None
 version = "1.7-beta"
-build = "17104"
+build = "17106"
 _uuid = uuid.uuid1()
 queue = {}
 errors = []
@@ -220,7 +220,6 @@ class embeds:
             e.set_author(name="Left Guild", icon_url=server.icon_url)
         e.add_field(name="Name", value=server.name)
         e.add_field(name="ID", value=server.id)
-        e.add_field(name="Joined", value=server.me.joined_at)
         usrs = 0
         bots = 0
         for usr in server.members:
@@ -895,6 +894,16 @@ class Owner:
             await self.bot.say(mesg)
             await self.bot.delete_message(ctx.message)
 
+    @commands.command(pass_context=True, hidden=True)
+    async def dm(self, ctx, user: discord.User, *, mesg: str):
+        if str(ctx.message.author.id) in admin_ids:
+            try:
+                await self.bot.send_message(user, mesg)
+            except:
+                raise
+            else:
+                await self.bot.say(":ok_hand:")
+
     @commands.group(pass_context=True)
     async def request(self, ctx):
         pass
@@ -1354,7 +1363,7 @@ class General:
             color = ctx.message.server.me.color
         e = discord.Embed(color=color, title="Upvote Help")
         e.add_field(name="> How do I upvote NanoBot?", value="Go to [this link]({0}) and press the button named **Upvote**. If the button is disabled, log in to your Discord account via [here]({1}). If the upvote button is green, you're good to go!".format("https://discordbots.org/bot/294210459144290305", "https://discordbots.org/login"))
-        e.add_field(name="> What features are included with the voter status?", value="For starters, get a sweet badge on your user profile like this one: {0}. You'll also get access to a premium music player, and lots more! Type **!!upvote features** to learn more.")
+        e.add_field(name="> What features are included with the voter status?", value="For starters, get a sweet badge on your user profile like this one: {0}. You'll also get access to a premium music player, and lots more! Type **!!upvote features** to learn more.".format(badges['voter']))
         e.set_footer(text="{} upvoters".format(len(get_voters())))
         await self.bot.say(embed=e)
 
