@@ -210,7 +210,7 @@ class embeds:
             else:
                 usrs += 1
         e.add_field(name="Users", value="{} members / {} bots".format(usrs, bots))
-        e.add_field(name="Owner", value=server.owner)
+        e.add_field(name="Owner", value=server.owner.name)
         return e
     def server_leave(server):
         e = discord.Embed(color=discord.Color.red())
@@ -228,7 +228,14 @@ class embeds:
             else:
                 usrs += 1
         e.add_field(name="Users", value="{} members / {} bots".format(usrs, bots))
-        e.add_field(name="Owner", value=server.owner)
+        e.add_field(name="Owner", value=server.owner.name)
+        return e
+    def _err(e, ctx):
+        e = discord.Embed(color=discord.Color.red(), title="Error", description="```{}```".format(e))
+        e.add_field(name="Server", value=ctx.message.server.name + " ({})".format(ctx.message.server.id))
+        e.add_field(name="Author", value=ctx.message.author)
+        e.add_field(name="Command", value=ctx.command)
+        e.add_field(name="Owner", value=ctx.message.server.owner.name)
         return e
     def user_kick(author, user, reason, case):
         e = discord.Embed(color=discord.Color.gold(), title="Kick | Case {}".format(case))
@@ -438,7 +445,7 @@ class Music:
         """Plays a song.
         If there is a song currently in the queue, then it is
         queued until the next song is done playing.
-        This command automatically searches as well from YouTube.
+        This command automatically searches from YouTube.
         The list of supported sites can be found here:
         https://rg3.github.io/youtube-dl/supportedsites.html
         """
@@ -446,50 +453,59 @@ class Music:
         global errors
         songs_played.append(song)
         await self.bot.send_typing(ctx.message.channel)
-        state = self.get_voice_state(ctx.message.server)
-        opts = {
-            'default_search': 'auto',
-            'quiet': True,
-        }
+        try:
+            state = self.get_voice_state(ctx.message.server)
+            opts = {
+                'default_search': 'auto',
+                'quiet': True,
+            }
 
-        if state.voice is None:
-            success = await ctx.invoke(self.summon)
-            if not success:
-                pass
-        vc = ctx.message.server.me.voice.voice_channel
-        if vc is not None and ctx.message.author in vc.voice_members:
-            try:
-                player = await state.voice.create_ytdl_player(song, ytdl_options=opts, after=state.toggle_next, before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5")
-            except OSError as e:
-                errors.append(e)
-                logging.fatal(str(e))
-                await self.bot.say(embed=embeds.error(str(e), ctx))
-            except youtube_dl.utils.GeoRestrictedError:
-                await self.bot.say(embed=errors.error("This video is not available in your country."))
-            except youtube_dl.utils.DownloadError as e:
-                await self.bot.say("An error occurred while downloading this video: {}".format(str(e)))
-            except Exception as e:
-                e = str(e)
-                logging.error(e)
-                logging.error(traceback.format_exc())
-                await self.bot.say(embed=embeds.error(e, ctx))
-            else:
-                player.volume = 0.6
+            if state.voice is None:
+                success = await ctx.invoke(self.summon)
+                if not success:
+                    pass
+            vc = ctx.message.server.me.voice.voice_channel
+            if vc is not None and ctx.message.author in vc.voice_members:
                 try:
-                    entry = VoiceEntry(ctx.message, player)
-                except Exception as e:
-                    logging.error(str(e))
+                    player = await state.voice.create_ytdl_player(song, ytdl_options=opts, after=state.toggle_next, before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5")
+                except OSError as e:
                     errors.append(e)
+                    logging.fatal(str(e))
                     await self.bot.say(embed=embeds.error(str(e), ctx))
+                except youtube_dl.utils.GeoRestrictedError:
+                    await self.bot.say(embed=errors.error("This video is not available in your country."))
+                except youtube_dl.utils.DownloadError as e:
+                    await self.bot.say("An error occurred while downloading this video: {}".format(str(e)))
+                except Exception as e:
+                    e = str(e)
+                    logging.error(e)
+                    logging.error(traceback.format_exc())
+                    await self.bot.say(embed=embeds.error(e, ctx))
                 else:
+                    player.volume = 0.6
                     try:
-                        await state.songs.put(entry)
-                        await self.bot.say(':notes: Added ' + str(entry) + ' to the queue.')
-                    except asyncio.QueueFull:
-                        await self.bot.say(':no_entry_sign: You can only have 10 songs in queue at a time!')
-        else:
-            if vc is not None:
-                await self.bot.say(embed=embeds.permission_denied("You are not in the current voice channel."))
+                        entry = VoiceEntry(ctx.message, player)
+                    except Exception as e:
+                        logging.error(str(e))
+                        errors.append(e)
+                        await self.bot.say(embed=embeds.error(str(e), ctx))
+                    else:
+                        try:
+                            await state.songs.put(entry)
+                            await self.bot.say(':notes: Added ' + str(entry) + ' to the queue.')
+                        except asyncio.QueueFull:
+                            await self.bot.say(':no_entry_sign: You can only have 10 songs in queue at a time!')
+            else:
+                if vc is not None:
+                    await self.bot.say(embed=embeds.permission_denied("You are not in the current voice channel."))
+        except discord.InvalidArgument:
+            await self.bot.say(embed=discord.Embed(description="**You are not in a voice channel!**"))
+        except discord.ConnectionClosed:
+            await self.bot.say(embed=discord.Embed(description="**The voice connection was closed.**\nTry doing `!!stop` and `!!summon`."))
+        except TimeoutError:
+            await self.bot.say(embed=discord.Embed(description="**The voice session timed out.**\nIf the problem persists, try changing the voice region to `US East`."))
+        except:
+            raise
 
 
     @commands.command(pass_context=True, no_pm=True)
@@ -1127,7 +1143,7 @@ class General:
         global partners
         global badges
         global blocked_ids
-        badge = ""
+        badge = " "
         if user is None or user == None:
             user = ctx.message.author
         r = requests.get("https://discordbots.org/api/bots/294210459144290305/votes", headers={"Authorization":os.getenv("DBOTSLIST_TOKEN")})
@@ -1351,9 +1367,12 @@ class General:
     async def upvote(self, ctx): # !!upvote
         """Upvote NanoBot to receive special perks!"""
         if ctx.invoked_subcommand is None:
-            e = discord.Embed(description="{0} **[Click Here]({1})** to upvote NanoBot and get **premium features**! {0}".format(badges['voter'], "https://discordbots.org/bot/294210459144290305"))
-            e.set_footer(text="Type !!upvote features to see the full list.")
-            await self.bot.say(embed=e)
+            if ctx.message.author.id in get_voters(mode=1):
+                await self.bot.say(embed=discord.Embed(description="Thanks for upvoting NanoBot! ([Vote Page]({}))".format("https://discordbots.org/bot/294210459144290305")))
+            else:
+                e = discord.Embed(description="{0} **[Click Here]({1})** to upvote NanoBot and get **premium features**! {0}".format(badges['voter'], "https://discordbots.org/bot/294210459144290305"))
+                e.set_footer(text="Type !!upvote features to see the full list.")
+                await self.bot.say(embed=e)
 
     @upvote.command(name="help", pass_context=True)
     async def _help(self, ctx):
@@ -1442,6 +1461,42 @@ class Fun:
         else:
             await self.bot.say("That doesn't look like a question.")
 
+class Git:
+    """Commands using GitHub's api at https://api.github.com"""
+
+    def __init__(self, bot, api_url):
+        self.bot = bot
+        self.api = api_url
+
+    @commands.group(pass_context=True)
+    async def git(self, ctx): # !!git
+        if ctx.invoked_subcommand is None:
+            await self.bot.send_typing(ctx.message.channel)
+            e = discord.Embed(color=0x24292e, title="GitHub Commands", description="`!!git org <org>` - Shows organization info\n`!!git search <query>` - Searches GitHub for query\n`!!git repo <user>/<repo>` - Shows repository info\n`!!git user <user>` - Shows user info")
+            e.set_thumbnail(url="http://www.sergilazaro.com/images/github_logo_white.png")
+            await self.bot.say(embed=e)
+
+    @git.command(pass_context=True)
+    async def user(self, ctx, user: str):
+        await self.bot.send_typing(ctx.message.channel)
+        _url = self.api + "/users/" + user
+        r = requests.get(_url)
+        if r.status_code == 404:
+            await self.bot.say(":no_entry_sign: The requested user wasn't found.")
+        elif r.status_code == 200:
+            j = r.json()
+            e = discord.Embed(description=j['bio'])
+            e.set_author(name="{} ({})".format(j['login'], j['name']), url=j['avatar_url'])
+            e.set_thumbnail(url=j['avatar_url'])
+            e.add_field(name="Location", value=j['location'])
+            e.add_field(name="Website", value="[{0}]({0})".format(j['blog']))
+            e.add_field(name="Repositories", value="[{0}]({1})".format(j['public_repos'], "https://github.com/{}?tab=repositories".format(j['login'])))
+            e.add_field(name="Gists", value="[{0}]({1})".format(j['public_gists'], "https://gist.github.com/" + j['login']))
+            e.add_field(name="Followers", value=j['followers'])
+            e.add_field(name="Following", value=j['following'])
+            await self.bot.say(embed=e)
+        else:
+            r.raise_for_status()
 class Status:
 
     def __init__(self, bot):
@@ -1833,7 +1888,7 @@ bot = None
 if args.use_beta_token:
     bot = commands.Bot(command_prefix=['!!beta ', 'nano beta '], description='A music, fun, moderation, and Overwatch bot for Discord.')
 else:
-    bot = commands.Bot(command_prefix=['!!', 'nano '], description='A music, fun, moderation, and Overwatch bot for Discord.')
+    bot = commands.Bot(command_prefix=['!!', 'nano ', 'Nano '], description='A music, fun, moderation, and Overwatch bot for Discord.')
 logging.debug('done')
 logging.debug('Adding cogs...')
 bot.add_cog(Music(bot))
@@ -1845,6 +1900,7 @@ bot.add_cog(Fun(bot))
 bot.add_cog(YouTube(bot))
 bot.add_cog(Status(bot))
 bot.add_cog(Overwatch(bot))
+bot.add_cog(Git(bot, "https://api.github.com"))
 logging.debug('done')
 
 logging.debug('Defining events...')
@@ -1908,6 +1964,12 @@ async def on_command_error(error, ctx): # When a command error occurrs
             if _traceback is not None:
                 logging.error(_traceback)
             await bot.send_message(ctx.message.channel, embed=embeds.error(error, ctx))
+            try:
+                await bot.send_message(bot.get_channel(id="334385091482484736"), embed=embeds._err(error, ctx))
+            except Exception as e:
+                logging.warn("Failed to send error message to log channel")
+                logging.warn("{0}: {1}".format(type(e).__name__, e))
+                logging.warn(traceback.format_exc())
 
 @bot.event
 async def on_message(message): # When a message is sent
