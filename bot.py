@@ -53,7 +53,7 @@ elif args.speedtest:
     sys.exit(x)
 elif args.debug:
     logging.basicConfig(format='[%(asctime)s/%(levelname)s] %(name)s: %(message)s', level=logging.DEBUG, datefmt='%I:%M:%S %p')
-    logging.debug("Logging level set to DEBUG")
+    logging.info("Logging level set to DEBUG")
 elif args.maintenance:
     x = os.system('python maintenance.py')
     sys.exit(x)
@@ -80,7 +80,7 @@ async def post_stats():
         logging.error("The following data was returned by the request:\n{}".format(r.text))
 
 os.chdir('data')
-logging.debug("Setting up configuration...")
+logging.info("Setting up configuration...")
 
 partners = []
 partnered_servers = []
@@ -88,6 +88,7 @@ admin_ids = []
 blocked_ids = []
 staff = []
 custom_cmds = {}
+breaking = ""
 badges = {
 'partner':'<:partner:335963561106866178>',
 'staff':'<:staff:314068430787706880>',
@@ -211,6 +212,7 @@ class embeds:
                 usrs += 1
         e.add_field(name="Users", value="{} members / {} bots".format(usrs, bots))
         e.add_field(name="Owner", value=server.owner.name)
+        e.add_field(name="Total", value=str(len(bot.servers)))
         return e
     def server_leave(server):
         e = discord.Embed(color=discord.Color.red())
@@ -229,6 +231,7 @@ class embeds:
                 usrs += 1
         e.add_field(name="Users", value="{} members / {} bots".format(usrs, bots))
         e.add_field(name="Owner", value=server.owner.name)
+        e.add_field(name="Total", value=str(len(bot.servers)))
         return e
     def _err(e, ctx):
         e = discord.Embed(color=discord.Color.red(), title="Error", description="```{}```".format(e))
@@ -279,9 +282,9 @@ class objects:
             def to_dict(self):
                 d = {"case": self.case, "server": self.server, "user": self.user, "mod": self.mod, "reason": self.reason}
                 return d
-logging.debug('done')
+logging.info('done')
 
-logging.debug('Defining commands...')
+logging.info('Defining commands...')
 def get_voters(mode=0):
     r = requests.get("https://discordbots.org/api/bots/294210459144290305/votes", headers={"Authorization":os.getenv("DBOTSLIST_TOKEN")})
     if r.status_code == 200:
@@ -410,7 +413,7 @@ class Music:
             await self.create_voice_client(channel)
         except discord.errors.ClientException:
             await self.bot.say(embed=embeds.error("Already in a voice channel!", ctx))
-        except TimeoutError:
+        except concurrent.futures._base.TimeoutError:
             await self.bot.say(embed=embeds.error("Connection timed out.", ctx))
         except discord.errors.Forbidden:
             await self.bot.say(embed=embeds.error("I don't have permission to join that voice channel!", ctx))
@@ -429,83 +432,57 @@ class Music:
         summoned_channel = ctx.message.author.voice_channel
         await self.bot.send_typing(ctx.message.channel)
         if summoned_channel is None:
-            await self.bot.say(embed=embeds.error("You aren't in a voice channel!", ctx))
+            await self.bot.say(embed=discord.Embed(description="**You need to be in a voice channel!**"))
             return False
         state = self.get_voice_state(ctx.message.server)
         if state.voice is None:
-            await self.bot.say(":notes: Ready to play music in `" + str(summoned_channel.name) + "`!")
-            state.voice = await self.bot.join_voice_channel(summoned_channel)
+            try:
+                state.voice = await self.bot.join_voice_channel(summoned_channel)
+            except discord.InvalidArgument:
+                await self.bot.say(embed=discord.Embed(description="**You are not in a voice channel!**"))
+            except discord.ConnectionClosed:
+                await self.bot.say(embed=discord.Embed(description="**The voice connection was closed.**\nTry doing `!!stop` and `!!summon`."))
+            except concurrent.futures._base.TimeoutError:
+                await self.bot.say(embed=discord.Embed(description="**I don't have permission to join that voice channel!**"))
+            except:
+                raise
+            else:
+                await self.bot.say(":notes: Ready to play music in `" + str(summoned_channel.name) + "`!")
         else:
             await state.voice.move_to(summoned_channel)
 
         return True
 
     @commands.command(pass_context=True, no_pm=True)
-    async def play(self, ctx, *, song : str): # !!play
+    async def play(self, ctx, *, song : str):
         """Plays a song.
         If there is a song currently in the queue, then it is
         queued until the next song is done playing.
-        This command automatically searches from YouTube.
+        This command automatically searches as well from YouTube.
         The list of supported sites can be found here:
         https://rg3.github.io/youtube-dl/supportedsites.html
         """
-        global songs_played
-        global errors
-        songs_played.append(song)
         await self.bot.send_typing(ctx.message.channel)
+        state = self.get_voice_state(ctx.message.server)
+        opts = {
+            'default_search': 'auto',
+            'quiet': False,
+        }
+        if state.voice is None:
+            success = await ctx.invoke(self.summon)
+            if not success:
+                return
         try:
-            state = self.get_voice_state(ctx.message.server)
-            opts = {
-                'default_search': 'auto',
-                'quiet': True,
-            }
-
-            if state.voice is None:
-                success = await ctx.invoke(self.summon)
-                if not success:
-                    pass
-            vc = ctx.message.server.me.voice.voice_channel
-            if vc is not None and ctx.message.author in vc.voice_members:
-                try:
-                    player = await state.voice.create_ytdl_player(song, ytdl_options=opts, after=state.toggle_next, before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5")
-                except OSError as e:
-                    errors.append(e)
-                    logging.fatal(str(e))
-                    await self.bot.say(embed=embeds.error(str(e), ctx))
-                except youtube_dl.utils.GeoRestrictedError:
-                    await self.bot.say(embed=errors.error("This video is not available in your country."))
-                except youtube_dl.utils.DownloadError as e:
-                    await self.bot.say("An error occurred while downloading this video: {}".format(str(e)))
-                except Exception as e:
-                    e = str(e)
-                    logging.error(e)
-                    logging.error(traceback.format_exc())
-                    await self.bot.say(embed=embeds.error(e, ctx))
-                else:
-                    player.volume = 0.6
-                    try:
-                        entry = VoiceEntry(ctx.message, player)
-                    except Exception as e:
-                        logging.error(str(e))
-                        errors.append(e)
-                        await self.bot.say(embed=embeds.error(str(e), ctx))
-                    else:
-                        try:
-                            await state.songs.put(entry)
-                            await self.bot.say(':notes: Added ' + str(entry) + ' to the queue.')
-                        except asyncio.QueueFull:
-                            await self.bot.say(':no_entry_sign: You can only have 10 songs in queue at a time!')
-            else:
-                if vc is not None:
-                    await self.bot.say(embed=embeds.permission_denied("You are not in the current voice channel."))
-        except discord.InvalidArgument:
-            await self.bot.say(embed=discord.Embed(description="**You are not in a voice channel!**"))
-        except discord.ConnectionClosed:
-            await self.bot.say(embed=discord.Embed(description="**The voice connection was closed.**\nTry doing `!!stop` and `!!summon`."))
-        except TimeoutError:
-            await self.bot.say(embed=discord.Embed(description="**The voice session timed out.**\nIf the problem persists, try changing the voice region to `US East`."))
-        except:
-            raise
+            player = await state.voice.create_ytdl_player(song, ytdl_options=opts, after=state.toggle_next, before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5")
+        except Exception as e:
+            logging.error(e)
+            logging.error(traceback.format_exc())
+            await self.bot.say(embed=embeds.error(str(type(e).__name__, e)))
+        else:
+            player.volume = 0.6
+            entry = VoiceEntry(ctx.message, player)
+            await self.bot.say(':notes: Added ' + str(entry) + ' to the queue.')
+            await state.songs.put(entry)
 
 
     @commands.command(pass_context=True, no_pm=True)
@@ -648,8 +625,8 @@ class Moderation:
                 passed = True
         return passed
 
-    @commands.command(no_pm=True)
-    async def modhelp(self):
+    @commands.command(no_pm=True, pass_context=True)
+    async def modhelp(self, ctx):
         e = discord.Embed(color=ctx.message.server.me.color, title="Moderation Help")
         e.add_field(name="!!modhelp", value="Shows help on moderation commands.")
         e.add_field(name="!!prune <amount>", value="Prunes the last `<amount>` of messages.")
@@ -754,9 +731,9 @@ class Admin:
         if ctx.invoked_subcommand is None:
             await self.bot.say("Type `!!cmd help` for proper usage.")
 
-    @cmd.command(no_pm=True, name="help")
+    @cmd.command(no_pm=True, name="help", pass_context=True)
     @commands.check(isadmin)
-    async def _help(self):
+    async def _help(self, ctx):
         e = discord.Embed(color=ctx.message.server.me.color, title="Custom Commands")
         e.add_field(name="!!cmd help", value="Shows this message.")
         e.add_field(name="!!cmd add <name> <value>", value="Creates a custom command named `<name>` with the value `<value>`.")
@@ -852,6 +829,15 @@ class Owner:
             os.chdir('..')
             await self.bot.say(":ok_hand:")
 
+    @commands.command(pass_context=True)
+    async def setbreaking(self, ctx, *, msg : str):
+        global admin_ids
+        global breaking
+        if ctx.message.author.id in admin_ids:
+            breaking = msg
+            if breaking == "None":
+                breaking = ""
+            await self.bot.say(":ok_hand:")
     @config.command(name="list")
     async def _list(self):
         path = os.path.join(os.getcwd(), "data")
@@ -1143,7 +1129,7 @@ class General:
         global partners
         global badges
         global blocked_ids
-        badge = " "
+        badge = ""
         if user is None or user == None:
             user = ctx.message.author
         r = requests.get("https://discordbots.org/api/bots/294210459144290305/votes", headers={"Authorization":os.getenv("DBOTSLIST_TOKEN")})
@@ -1175,6 +1161,7 @@ class General:
                    stp2 = stp2 + role.name
                 else:
                     stp2 = stp2 + role.name + ", "
+        if stp2 == "": stp2 = "None"
         embed = discord.Embed(color=user.color)
         embed.add_field(name="Username", value=str(user)[:1000])
         embed.add_field(name="Nickname", value=str(user.nick)[:1000])
@@ -1247,11 +1234,11 @@ class General:
                 else:
                     pyver += str(x) + "."
             elapsed_time = time.gmtime(time.time() - start_time)
-            logging.debug("Got bot uptime")
+            logging.info("Got bot uptime")
             stp = str(elapsed_time[7] - 1) + " days, " + str(elapsed_time[3]) + " hours, " + str(elapsed_time[4]) + " minutes"
-            logging.debug("Formatted bot uptime")
+            logging.info("Formatted bot uptime")
             users = sum(1 for _ in self.bot.get_all_members())
-            logging.debug("Got all bot users")
+            logging.info("Got all bot users")
             color = discord.Color.default()
             if ctx.message.server is not None:
                 color = ctx.message.server.me.color
@@ -1264,7 +1251,7 @@ class General:
             embed.add_field(name="> Voice", value="**• Active Sessions:** {}\n**• Songs Played:** {}".format(len(self.bot.voice_clients), len(songs_played)))
             embed.add_field(name="> Version", value="**• NanoBot:** {}\n**• discord.py:** {}\n**• Python:** {}".format(version, discord.__version__, pyver))
             embed.add_field(name="> Misc", value="**• Website:** [Go!](https://nanomotion.github.io/pages/bot)\n**• Discord:** [Join!](https://discord.gg/eDRnXd6)")
-            logging.debug("Created Embed")
+            logging.info("Created Embed")
             await self.bot.say(embed=embed)
         except:
             raise
@@ -1274,7 +1261,7 @@ class General:
         """Shows guild info."""
         global partnered_servers
         global badges
-        badge = ""
+        badge = "​"
         if ctx.message.server.id in partnered_servers:
             badge += badges['partner']
         """Shows guild info."""
@@ -1314,7 +1301,7 @@ class General:
             color = ctx.message.server.me.color
         e = discord.Embed(color=color, title="NanoBot Staff")
         for pid in staff:
-            _badge = ""
+            _badge = "​"
             user = self.bot.get_server("294215057129340938").get_member(pid)
             if pid in partners:
                 _badge += badges['partner']
@@ -1737,7 +1724,7 @@ class Overwatch:
 
     @overwatch.command(pass_context=True)
     async def hero(self, ctx, *, name):
-        """Shows info on a hero by name."""
+        """Shows info on a hero by name. (E.g. !!overwatch hero Ana)"""
         name = name.lower()
         hero = None
         await self.bot.send_typing(ctx.message.channel)
@@ -1814,8 +1801,8 @@ class Overwatch:
             await self.bot.say(embed=e)
 
     @overwatch.command(pass_context=True, name="map")
-    async def _map(self, ctx, *, name = None):
-        """Shows info on a map by name or ID."""
+    async def _map(self, ctx, *, name):
+        """Shows info on a map by name or ID. (E.g. !!overwatch map Ilios)"""
         name = name.lower()
         mp = None
         thumb = None
@@ -1882,15 +1869,15 @@ class Overwatch:
             e.set_image(url=thumb)
             await self.bot.say(embed=e)
 
-logging.debug('done')
-logging.debug('Creating bot...')
+logging.info('done')
+logging.info('Creating bot...')
 bot = None
 if args.use_beta_token:
     bot = commands.Bot(command_prefix=['!!beta ', 'nano beta '], description='A music, fun, moderation, and Overwatch bot for Discord.')
 else:
     bot = commands.Bot(command_prefix=['!!', 'nano ', 'Nano '], description='A music, fun, moderation, and Overwatch bot for Discord.')
-logging.debug('done')
-logging.debug('Adding cogs...')
+logging.info('done')
+logging.info('Adding cogs...')
 bot.add_cog(Music(bot))
 bot.add_cog(Moderation(bot))
 bot.add_cog(Admin(bot))
@@ -1901,9 +1888,9 @@ bot.add_cog(YouTube(bot))
 bot.add_cog(Status(bot))
 bot.add_cog(Overwatch(bot))
 bot.add_cog(Git(bot, "https://api.github.com"))
-logging.debug('done')
+logging.info('done')
 
-logging.debug('Defining events...')
+logging.info('Defining events...')
 @bot.event
 async def on_server_join(server): # When the bot joins a server
     print(color.GREEN + "Joined server " + str(server.id)+ " (" + str(server.name) + ")")
@@ -1944,7 +1931,7 @@ async def on_command_error(error, ctx): # When a command error occurrs
     elif isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
         await bot.send_message(ctx.message.channel, embed=embeds.invalid_syntax("You're missing required arguments! Type `!!help {}` for more help.".format(ctx.command)))
     elif isinstance(error, TimeoutError):
-        pass
+        await bot.send_message(ctx.message.channel, embed=discord.Embed(description="Sorry, that didn't work."))
     elif isinstance(error, discord.ext.commands.DisabledCommand):
         await bot.send_message(ctx.message.channel, ":tools: This command is disabled!")
     elif isinstance(error, discord.ext.commands.errors.BadArgument):
@@ -1953,7 +1940,7 @@ async def on_command_error(error, ctx): # When a command error occurrs
         else:
             await bot.send_message(ctx.message.channel, embed=embeds.invalid_syntax("Invalid argument!"))
     elif isinstance(error, discord.errors.Forbidden) or isinstance(error, discord.Forbidden):
-        pass
+        logging.info("Forbidden...")
     elif isinstance(error, discord.ext.commands.errors.NoPrivateMessage):
         await bot.send_message(ctx.message.channel, embed=embeds.error("This command can't be used in private messages.", ctx))
     else:
@@ -1976,6 +1963,7 @@ async def on_message(message): # When a message is sent
     global cmds_this_session
     global custom_cmds
     global blocked_ids
+    global breaking
     if (message.content.startswith('!!') and not message.content.startswith('!!!')) or message.content.startswith('nano'):
         if message.author.id in blocked_ids:
             await bot.send_message(message.channel, ":no_entry_sign: You have been banned from using NanoBot.")
@@ -2010,13 +1998,15 @@ async def on_message(message): # When a message is sent
                 e.add_field(name="> Music", value="`!!join`, `!!summon`, `!!play`, `!!yt`, `!!queue`, `!!volume`, `!!pause`, `!!resume`, `!!stop`, `!!skip`, `!!playing`")
                 e.add_field(name="> Overwatch", value="`!!ow profile`, `!!ow hero`, `!!ow map`, `!!ow event`")
                 e.add_field(name="Voting", value="Vote for NanoBot [here](https://discordbots.org/bot/294210459144290305) and receive special perks! Type `!!upvote` for more info.")
-                e.add_field(name="Notice", value="*By using NanoBot, you agree to the [Terms and Conditions](https://nanomotion.github.io/pages/faq/policies/).*")
+                e.add_field(name="Terms of Service", value="*By using NanoBot, you agree to the [Terms and Conditions](https://nanomotion.github.io/pages/faq/policies/).*")
                 e.set_footer(icon_url=message.author.avatar_url, text="Requested by {}{}".format(str(message.author), extra))
                 e.set_thumbnail(url=bot.user.avatar_url)
                 #f = open('help.txt', 'r')
                 #await bot.send_message(message.channel, f.read())
                 #f.close()
                 await bot.send_message(message.channel, embed=e)
+                if not breaking == "":
+                    await bot.send_message(message.channel, embed=discord.Embed(color=discord.Color.gold(), title="⚠️ Breaking News", description=breaking))
             else:
                 await bot.process_commands(message)
 
@@ -2028,7 +2018,7 @@ async def on_ready():
     st_servers = bot.servers
     logging.info("Logged in as {0.name}#{0.discriminator}".format(bot.user))
     await post_stats()
-logging.debug('done')
+logging.info('done')
 
 if __name__ == "__main__":
     logging.info("Finished with setup")
