@@ -44,7 +44,7 @@ parser.add_argument("-sptest", "--speedtest", help="Pings gateway.discord.gg", a
 parser.add_argument("-m", "--maintenance", help="Runs the bot in maintenance mode", action="store_true")
 parser.add_argument("-gtoken", "--gapi-token", help="Runs the bot with a custom Google API token")
 parser.add_argument("-nc", "--no-color", help="Runs the bot without logger colors", action="store_true")
-parser.add_argument("-beta", "--use-beta-token", help="Runs the bot without logger colors", action="store_true")
+parser.add_argument("-beta", "--use-beta-token", help="Run the beta version of NanoBot.", action="store_true")
 args = parser.parse_args()
 if args.version:
     print(version)
@@ -92,7 +92,7 @@ breaking = ""
 badges = {
 'partner':'<:partner:356053840799203330>',
 'staff':'<:staff:356053841013112833>',
-'dev':'<:dev:356053840975364097>'
+'dev':'<:dev:356053840975364097>',
 'voter':'<:voter:356053840996466699>',
 'retired':'<:retired:343110154834935809>',
 'bronze':'<:ow_bronze:338113846432628736>',
@@ -237,9 +237,10 @@ class embeds:
     def _err(e, ctx):
         e = discord.Embed(color=discord.Color.red(), title="Error", description="```{}```".format(e))
         e.add_field(name="Server", value=ctx.message.server.name + " ({})".format(ctx.message.server.id))
+        e.add_field(name="Owner", value=ctx.message.server.owner.name)
         e.add_field(name="Author", value=ctx.message.author)
         e.add_field(name="Command", value=ctx.command)
-        e.add_field(name="Owner", value=ctx.message.server.owner.name)
+        e.add_field(name="Context", value="`{}`".format(ctx.message.content))
         return e
     def user_kick(author, user, reason, case):
         e = discord.Embed(color=discord.Color.gold(), title="Kick | Case {}".format(case))
@@ -466,6 +467,8 @@ class Music:
         The list of supported sites can be found here:
         https://rg3.github.io/youtube-dl/supportedsites.html
         """
+        global songs_played
+        global errors
         await self.bot.send_typing(ctx.message.channel)
         state = self.get_voice_state(ctx.message.server)
         opts = {
@@ -477,12 +480,14 @@ class Music:
             if not success:
                 return
         try:
+            songs_played.append(song)
             player = await state.voice.create_ytdl_player(song, ytdl_options=opts, after=state.toggle_next, before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5")
         except youtube_dl.DownloadError:
             await self.bot.say(embed=discord.Embed(description="**An error occurred while retreiving this file.**\nTry searching for it."))
         except Exception as e:
             logging.error(e)
             logging.error(traceback.format_exc())
+            errors.append(e)
             await self.bot.say(embed=embeds.error(str(type(e).__name__), e))
         else:
             player.volume = 0.6
