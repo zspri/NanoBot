@@ -90,9 +90,10 @@ staff = []
 custom_cmds = {}
 breaking = ""
 badges = {
-'partner':'<:partner:335963561106866178>',
-'staff':'<:staff:314068430787706880>',
-'voter':'<:voter:340903213035290627>',
+'partner':'<:partner:356053840799203330>',
+'staff':'<:staff:356053841013112833>',
+'dev':'<:dev:356053840975364097>'
+'voter':'<:voter:356053840996466699>',
 'retired':'<:retired:343110154834935809>',
 'bronze':'<:ow_bronze:338113846432628736>',
 'silver':'<:ow_silver:338113846734618624>',
