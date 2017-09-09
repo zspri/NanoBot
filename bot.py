@@ -412,7 +412,10 @@ class Music:
         try:
             await self.create_voice_client(channel)
         except discord.errors.ClientException:
-            await self.bot.say(embed=embeds.error("Already in a voice channel!", ctx))
+            if channel is None:
+                await self.bot.say(embed=discord.Embed(description="You're not in a voice channel!"))
+            else:
+                await self.bot.say(embed=discord.Embed(description="Already in a voice channel!"))
         except concurrent.futures._base.TimeoutError:
             await self.bot.say(embed=embeds.error("Connection timed out.", ctx))
         except discord.errors.Forbidden:
@@ -474,10 +477,12 @@ class Music:
                 return
         try:
             player = await state.voice.create_ytdl_player(song, ytdl_options=opts, after=state.toggle_next, before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5")
+        except youtube_dl.DownloadError:
+            await self.bot.say(embed=discord.Embed(description="**An error occurred while retreiving this file.**\nTry searching for it."))
         except Exception as e:
             logging.error(e)
             logging.error(traceback.format_exc())
-            await self.bot.say(embed=embeds.error(str(type(e).__name__, e)))
+            await self.bot.say(embed=embeds.error(str(type(e).__name__), e))
         else:
             player.volume = 0.6
             entry = VoiceEntry(ctx.message, player)
