@@ -420,9 +420,9 @@ class Music:
                 await self.bot.say(embed=discord.Embed(description="Already in a voice channel!"))
         except concurrent.futures._base.TimeoutError:
             await self.bot.say(embed=embeds.error("Connection timed out.", ctx))
-        except discord.errors.Forbidden:
+        except discord.Forbidden:
             await self.bot.say(embed=embeds.error("I don't have permission to join that voice channel!", ctx))
-        except discord.errors.InvalidArgument:
+        except discord.InvalidArgument:
             await self.bot.say(embed=embeds.invalid_syntax("{} is not a valid voice channel.".format(ctx.message.author.voice_channel)))
         except Exception as e:
             logging.error(str(e))
@@ -484,11 +484,12 @@ class Music:
             player = await state.voice.create_ytdl_player(song, ytdl_options=opts, after=state.toggle_next, before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5")
         except youtube_dl.DownloadError:
             await self.bot.say(embed=discord.Embed(description="**An error occurred while retreiving this file.**\nTry searching for it."))
-        except Exception as e:
-            logging.error(e)
-            logging.error(traceback.format_exc())
-            errors.append(e)
-            await self.bot.say(embed=embeds.error(str(type(e).__name__), e))
+        except discord.InvalidArgument:
+            pass
+        except AttributeError:
+            pass
+        except:
+            raise
         else:
             player.volume = 0.6
             entry = VoiceEntry(ctx.message, player)
