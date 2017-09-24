@@ -1,6 +1,8 @@
 # NanoBot
 A music, fun, moderation, and Overwatch bot written in discord.py.
 
+> **Note:** We are preparing for the release of the [rewrite](https://github.com/Nanomotion/NanoBot/tree/rewrite). Therefore this branch will receive little to no commits in the future.
+
 <img src="https://cdn.discordapp.com/avatars/294210459144290305/5d2a9988fb782c487920d046c2b8c644.png" width="300">
 
 ## Invite
