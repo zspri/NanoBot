@@ -155,8 +155,8 @@ kicks = []
 bans = []
 start_time = None
 st_servers = None
-version = "1.7-beta"
-build = "17106"
+version = "0.1.8-beta"
+build = "18106"
 _uuid = uuid.uuid1()
 queue = {}
 errors = []
@@ -1254,7 +1254,7 @@ class General:
             color = discord.Color.default()
             if ctx.message.server is not None:
                 color = ctx.message.server.me.color
-            embed = discord.Embed(color=color, title="NanoBot Statistics", description="Made by **Der#4587**")
+            embed = discord.Embed(color=color, title="NanoBot Statistics", description="Made by **Der#4587** and **Kalico#5669**")
             embed.set_footer(text="NanoBot#2520")
             embed.set_thumbnail(url=self.bot.user.avatar_url)
             embed.add_field(name="> Uptime", value=stp)
@@ -1262,7 +1262,7 @@ class General:
             embed.add_field(name="> Commands", value="**• Total Received:** {}\n**• Errors:** {} ({}%)".format(len(cmds_this_session), len(errors), round(len(errors)/len(cmds_this_session) * 100)))
             embed.add_field(name="> Voice", value="**• Active Sessions:** {}\n**• Songs Played:** {}".format(len(self.bot.voice_clients), len(songs_played)))
             embed.add_field(name="> Version", value="**• NanoBot:** {}\n**• discord.py:** {}\n**• Python:** {}".format(version, discord.__version__, pyver))
-            embed.add_field(name="> Misc", value="**• Website:** [Go!](https://nanomotion.github.io/pages/bot)\n**• Discord:** [Join!](https://discord.gg/eDRnXd6)")
+            embed.add_field(name="> Misc", value="**• Website:** [Go!](https://nanobot-discord.github.io)\n**• Discord:** [Join!](https://discord.gg/eDRnXd6)")
             logging.info("Created Embed")
             await self.bot.say(embed=embed)
         except:
