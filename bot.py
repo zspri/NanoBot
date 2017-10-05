@@ -124,8 +124,7 @@ def logger_config(bot):
 	logger.setLevel(logging.INFO)
 	log_format = logging.Formatter(
 		'%(asctime)s %(levelname)s %(module)s %(funcName)s %(lineno)d: '
-		'%(message)s', datefmt='[%I:%M:%S %p]')
-		
+		'%(message)s', datefmt='[%I:%M:%S %p]')	
 	stdout_handler = logging.StreamHandler(sys.stdout)
 	stdout_handler.setFormatter(log_format)
 	stdout_handler.setLevel(logging.INFO)
