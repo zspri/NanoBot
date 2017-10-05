@@ -193,8 +193,7 @@ class Core:
             if m.content.strip().lower() == "more":
                 return True
         
-        if ("exit" in code.lower() or "token" in code.lower()
-            or ctx.message.author.id != self.bot.settings.dev):
+        if ("exit" in code.lower() or "token" in code.lower()):
             await self.bot.say("Access Denied")
             
         else:
