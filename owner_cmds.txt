@@ -1,9 +1,0 @@
-```markdown
-< NanoBot Owner Commands >
-!!shutdown
-!!restart
-!!setplaying <game : str>
-!!setstatus <status : str>
-!!eval <code : str>
-!!exec <code : str>
-```
