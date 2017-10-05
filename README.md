@@ -1,8 +1,6 @@
 # NanoBot V2
 A music, fun, moderation, and Overwatch bot written in discord.py.
 
-<img src="https://cdn.discordapp.com/avatars/294210459144290305/5d2a9988fb782c487920d046c2b8c644.png" width="300">
-
 ## Invite
 
 > The new version of NanoBot is still in early-alpha and is not invitable. You can invite the [legacy](https://github.com/Nanomotion/NanoBot/tree/legacy) version of NanoBot to your server below.
