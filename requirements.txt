@@ -1,0 +1,3 @@
+pip
+discord.py
+youtube_dl
