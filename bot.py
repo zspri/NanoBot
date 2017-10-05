@@ -44,10 +44,10 @@ def initialize(bot_class=Bot):
 	
 	@bot.event
 	async def on_message(message):
-		if (message.content.startswith('`') and not message.content.startswith('``')) or message.content.startswith('beta '):
+		if (message.content.startswith('!!') and not message.content.startswith('!!!')) or message.content.startswith('nano '):
 			bot.logger.info(message.content)
 			ccmds = None
-			if message.content == "`" or message.content == "beta ":
+			if message.content == "!!" or message.content == "nano ":
 				await bot.send_message(message.channel, ":thinking: Why did you even think that would work? Type `!!help` for help.")
 			else:
 				await bot.process_commands(message)
