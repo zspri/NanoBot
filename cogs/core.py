@@ -139,16 +139,15 @@ class Core:
     @checks.is_dev()
     async def restart(self, ctx):
         """Restarts Nano"""
-        if ctx.message.author.id == self.bot.settings.dev:
-            await self.bot.say(":wave: Restarting...")
-            await self.bot.change_presence(status=discord.Status.idle)
-            log.info("Restarting... (Requester: {})".format(ctx.message.author))
-            try:
-                log.info("Attempting to log out...")
-                await self.bot.logout()
-            except:
-                log.warn("Logout attempt failed")
-            self.bot.loop.close()
+        await self.bot.say(":wave: Restarting...")
+        await self.bot.change_presence(status=discord.Status.idle)
+        log.info("Restarting... (Requester: {})".format(ctx.message.author))
+        try:
+            log.info("Attempting to log out...")
+            await self.bot.logout()
+        except:
+            log.warn("Logout attempt failed")
+        self.bot.loop.close()
 
     @commands.command(name="reload", hidden=True)
     @checks.is_dev()
