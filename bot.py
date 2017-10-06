@@ -137,11 +137,6 @@ def initialize(bot_class=Bot):
 
 def post_stats():
 	payload = {"server_count":int(len(bot.servers))}
-	headers = {"Authorization":str(bot.settings.botsdiscordpw_token)}
-	r = requests.post("https://bots.discord.pw/api/bots/{}/stats".format(str(bot.user.id)), data=payload, headers=headers)
-	if not(r.status_code == 200 or r.status_code == 304):
-		bot.logger.error("1/Failed to post server count: " + str(r.status_code))
-		bot.logger.error("The following data was returned by the request:\n{}".format(r.text))
 	headers = {"Authorization":str(bot.settings.discordbotsorg_token)}
 	r = requests.post("https://discordbots.org/api/bots/{}/stats".format(str(bot.user.id)), data=payload, headers=headers)
 	if not(r.status_code == 200 or r.status_code == 304):
