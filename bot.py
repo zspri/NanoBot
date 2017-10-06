@@ -3,6 +3,7 @@ from discord.ext import commands
 from optparse import OptionParser
 import asyncio
 import datetime
+import time
 import discord
 import logging
 import logging.handlers
@@ -15,13 +16,23 @@ from cogs.utils.embed import Embeds
 
 clist = ['cogs.core', 'cogs.dev', 'cogs.audio', 'cogs.general', 'cogs.overwatch']
 errors = []
+cmds_this_session = []
+
+class objects:
+    class Command:
+        def __init__(self, name, original):
+            self.name = name
+            self.original = original
 
 class Bot(commands.Bot):
 	def __init__(self, *args, **kwargs):
 		
 		def prefix_mgr(bot, message):
 			return bot.settings.get_prefixes(message.server)
-			
+		
+		self.cmds_this_session = []
+		self.errors = []
+		self.start_time = []
 		self.settings = Settings()
 		self.uptime = datetime.datetime.utcnow()
 		self.logger = logger_config(self)
@@ -47,6 +58,7 @@ def initialize(bot_class=Bot):
 		if (message.content.startswith('!!') and not message.content.startswith('!!!')) or message.content.startswith('nano '):
 			bot.logger.info(message.content)
 			ccmds = None
+			bot.cmds_this_session.append(objects.Command(message.content.split()[0], message.content))
 			if message.content == "!!" or message.content == "nano ":
 				await bot.send_message(message.channel, ":thinking: Why did you even think that would work? Type `!!help` for help.")
 			else:
@@ -77,7 +89,6 @@ def initialize(bot_class=Bot):
 	
 	@bot.event
 	async def on_command_error(error, ctx):
-		global errors
 		if isinstance(error, discord.ext.commands.errors.CommandNotFound):
 			pass
 		elif isinstance(error, discord.ext.commands.errors.CheckFailure):
@@ -97,7 +108,7 @@ def initialize(bot_class=Bot):
 			await bot.send_message(ctx.message.channel, embed=bot.embeds.error("This command can't be used in private messages.", ctx))
 		else:
 			if ctx.command:
-				errors.append(error)
+				bot.errors.append(error)
 				_type, _value, _traceback = sys.exc_info()
 				bot.logger.error(error.original)
 				if _traceback is not None:
@@ -106,6 +117,7 @@ def initialize(bot_class=Bot):
 	
 	@bot.event
 	async def on_ready():
+		bot.start_time = time.time()
 		print("Bot Initialized...")
 		print("Logged in as " + bot.user.name + " with ID " + bot.user.id)
 		await bot.change_presence(game=discord.Game(name="Nanobot v2.0 Beta"))
