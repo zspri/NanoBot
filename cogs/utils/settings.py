@@ -14,6 +14,8 @@ class Settings:
         self.check_folders()
         self.default_settings = {
             "TOKEN": None, #bot token
+            "BOTSDISCORDPW_TOKEN": None, # https://bots.discord.pw token
+            "DISCORDBOTSORG_TOKEN": None, # https://discordbots.org token
             "OWNER": None, #owner id
             "DEVELOPER": None, #dev id
             "PREFIXES": [], #server prefix
@@ -55,7 +57,7 @@ class Settings:
     @owner.setter
     def owner(self, value):
         self.bot_settings["OWNER"] = value
-    
+
     @property
     def dev(self):
         return self.bot_settings["DEVELOPER"]
@@ -63,7 +65,7 @@ class Settings:
     @dev.setter
     def dev(self, value):
         self.bot_settings["DEVELOPER"] = value
-    
+
     @property
     def token(self):
         return os.environ.get("NANO_TOKEN", self.bot_settings["TOKEN"])
@@ -91,6 +93,14 @@ class Settings:
     def prefixes(self, value):
         assert isinstance(value, list)
         self.bot_settings["PREFIXES"] = value
+
+    @property
+    def discordbotsorg_token(self):
+        return self.bot_settings["DISCORDBOTSORG_TOKEN"]
+
+    @property
+    def botsdiscordpw_token(self):
+        return self.bot_settings["BOTSDISCORDPW_TOKEN"]
 
     @property
     def servers(self):

@@ -3,18 +3,18 @@ A music, fun, moderation, and Overwatch bot written in discord.py.
 
 ## Invite
 
-> The new version of NanoBot is still in early-alpha and is not invitable. You can invite the [legacy](https://github.com/Nanomotion/NanoBot/tree/legacy) version of NanoBot to your server below.
+Visit the bot website: https://nanobot-discord.github.io
 
-Visit the bot website: http://bot.nanomotion.xyz
+Documentation: https://nanomotion.github.io/NanoBot
 
-Documentation: https://nanomotion.github.io/NanoBot/docs
-
-Invite NanoBot to your Discord server: https://discordapp.com/oauth2/authorize?client_id=294210459144290305&scope=bot&permissions=2146958463
+Invite NanoBot to your Discord server: https://discordapp.com/oauth2/authorize?client_id=294210459144290305&scope=bot&permissions=8
 
 View NanoBot on bots.discord.pw: https://bots.discord.pw/bots/294210459144290305
 
-View NanoBot on discordbots.org: https://discordbots.org/bot/294210459144290305
+View NanoBot on discordbots.org: https://discordbots.org/bot/nanobot
 
 ## Help and Support
+
+> **NOTICE:** The documentation is very outdated and is not guaranteed to be accurate.
 
 Join the official NanoBot Discord server: https://discord.gg/eDRnXd6C
