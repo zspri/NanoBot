@@ -20,16 +20,24 @@ errors = []
 cmds_this_session = []
 
 class objects:
+<<<<<<< HEAD
 	class Command:
 		def __init__(self, name, original):
 			self.name = name
 			self.original = original
+=======
+    class Command:
+        def __init__(self, name, original):
+            self.name = name
+            self.original = original
+>>>>>>> 16effb480d2b22b701f90b0f2b533193c4161054
 
 class Bot(commands.Bot):
 	def __init__(self, *args, **kwargs):
 
 		def prefix_mgr(bot, message):
 			return bot.settings.get_prefixes(message.server)
+<<<<<<< HEAD
 
 		def post_stats():
 		    await bot.change_presence(game=discord.Game(name='!!help • {} Guilds'.format(len(bot.servers))), status=discord.Status.online)
@@ -48,6 +56,12 @@ class Bot(commands.Bot):
 		self.cmds_this_session = []
 		self.errors = []
  		self.start_time = []
+=======
+
+		self.cmds_this_session = []
+		self.errors = []
+		self.start_time = []
+>>>>>>> 16effb480d2b22b701f90b0f2b533193c4161054
 		self.settings = Settings()
 		self.uptime = datetime.datetime.utcnow()
 		self.logger = logger_config(self)
@@ -135,7 +149,7 @@ def initialize(bot_class=Bot):
 
 	@bot.event
 	async def on_ready():
-	bot.start_time = time.time()
+		bot.start_time = time.time()
 		print("Bot Initialized...")
 		print("Logged in as " + bot.user.name + " with ID " + bot.user.id)
 		try:
