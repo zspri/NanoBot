@@ -31,23 +31,9 @@ class Bot(commands.Bot):
 		def prefix_mgr(bot, message):
 			return bot.settings.get_prefixes(message.server)
 
-		def post_stats():
-		    await bot.change_presence(game=discord.Game(name='!!help • {} Guilds'.format(len(bot.servers))), status=discord.Status.online)
-		    payload = {"server_count":int(len(bot.servers))}
-		    headers = {"Authorization":str(bot.settings.botsdiscordpw_token)}
-		    r = requests.post("https://bots.discord.pw/api/bots/{}/stats".format(str(bot.user.id)), data=payload, headers=headers)
-		    if not(r.status_code == 200 or r.status_code == 304):
-		        logger.error("1/Failed to post server count: " + str(r.status_code))
-		        logger.error("The following data was returned by the request:\n{}".format(r.text))
-		    headers = {"Authorization":str(bot.settings.discordbotsorg_token)}
-		    r = requests.post("https://discordbots.org/api/bots/{}/stats".format(str(bot.user.id)), data=payload, headers=headers)
-		    if not(r.status_code == 200 or r.status_code == 304):
-		        logger.error("2/Failed to post server count: " + str(r.status_code))
-		        logger.error("The following data was returned by the request:\n{}".format(r.text))
-
 		self.cmds_this_session = []
 		self.errors = []
- 		self.start_time = []
+		self.start_time = []
 		self.cmds_this_session = []
 		self.errors = []
 		self.start_time = []
@@ -143,10 +129,24 @@ def initialize(bot_class=Bot):
 		print("Logged in as " + bot.user.name + " with ID " + bot.user.id)
 		try:
 			post_stats()
+			await bot.change_presence(game=discord.Game(name='!!help • {} Guilds'.format(len(bot.servers))), status=discord.Status.online)
 		except:
 			logger.error(traceback.format_exc())
 
 	return bot
+
+def post_stats():
+	payload = {"server_count":int(len(bot.servers))}
+	headers = {"Authorization":str(bot.settings.botsdiscordpw_token)}
+	r = requests.post("https://bots.discord.pw/api/bots/{}/stats".format(str(bot.user.id)), data=payload, headers=headers)
+	if not(r.status_code == 200 or r.status_code == 304):
+		bot.logger.error("1/Failed to post server count: " + str(r.status_code))
+		bot.logger.error("The following data was returned by the request:\n{}".format(r.text))
+	headers = {"Authorization":str(bot.settings.discordbotsorg_token)}
+	r = requests.post("https://discordbots.org/api/bots/{}/stats".format(str(bot.user.id)), data=payload, headers=headers)
+	if not(r.status_code == 200 or r.status_code == 304):
+		bot.logger.error("2/Failed to post server count: " + str(r.status_code))
+		bot.logger.error("The following data was returned by the request:\n{}".format(r.text))
 
 def check_folders():
     folders = ("data", "data/bot", "cogs", "cogs/utils")
