@@ -72,6 +72,7 @@ def initialize(bot_class=Bot):
 	async def on_server_join(server):
 		try:
 			post_stats()
+			await bot.change_presence(game=discord.Game(name='!!help • {} Guilds'.format(len(bot.servers))), status=discord.Status.online)
 		except:
 			logger.error(traceback.format_exc())
 			logging.info("Joined server {0.name} (ID: {0.id})".format(server))
@@ -85,6 +86,7 @@ def initialize(bot_class=Bot):
 	async def on_server_remove(server):
 		try:
 			post_stats()
+			await bot.change_presence(game=discord.Game(name='!!help • {} Guilds'.format(len(bot.servers))), status=discord.Status.online)
 		except:
 			logger.error(traceback.format_exc())
 		logging.info("Left server {0.name} (ID: {0.id})".format(server))
