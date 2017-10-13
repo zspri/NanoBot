@@ -2,7 +2,7 @@
 import discord
 from discord.ext import commands
 from .utils.dataIO import dataIO
-from cogs.utils import checks
+from .utils import checks
 from .utils.chat_formatting import pagify, box
 import importlib
 import traceback

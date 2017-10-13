@@ -19,7 +19,9 @@ class Settings:
             "OWNER": None, #owner id
             "DEVELOPER": None, #dev id
             "PREFIXES": [], #server prefix
-			"DEV_MODE": "0" #dev mode
+			"DEV_MODE": "0", #dev mode
+            "default": {"ADMIN_ROLE": "NanoBot Admin",
+                        "MOD_ROLE": "NanoBot Mod"}
 			}
         self._memory_only = False
 
@@ -101,6 +103,30 @@ class Settings:
     @property
     def botsdiscordpw_token(self):
         return self.bot_settings["BOTSDISCORDPW_TOKEN"]
+
+    @property
+    def default_admin(self):
+        if "default" not in self.bot_settings:
+            self.update_old_settings()
+        return self.bot_settings["default"].get("ADMIN_ROLE", "")
+
+    @default_admin.setter
+    def default_admin(self, value):
+        if "default" not in self.bot_settings:
+            self.update_old_settings()
+        self.bot_settings["default"]["ADMIN_ROLE"] = value
+
+    @property
+    def default_mod(self):
+        if "default" not in self.bot_settings:
+            self.update_old_settings_v1()
+        return self.bot_settings["default"].get("MOD_ROLE", "")
+
+    @default_mod.setter
+    def default_mod(self, value):
+        if "default" not in self.bot_settings:
+            self.update_old_settings_v1()
+        self.bot_settings["default"]["MOD_ROLE"] = value
 
     @property
     def servers(self):

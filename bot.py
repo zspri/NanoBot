@@ -15,7 +15,7 @@ from cogs.utils.dataIO import dataIO
 from cogs.utils.settings import Settings
 from cogs.utils.embed import Embeds
 
-clist = ['cogs.core', 'cogs.dev', 'cogs.audio', 'cogs.general', 'cogs.overwatch']
+clist = ['cogs.core', 'cogs.dev', 'cogs.audio', 'cogs.general', 'cogs.overwatch', 'cogs.moderation']
 errors = []
 cmds_this_session = []
 
