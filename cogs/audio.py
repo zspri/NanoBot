@@ -1923,7 +1923,7 @@ class Audio:
 
             for server in stop_times:
                 if stop_times[server] and \
-                        int(time.time()) - stop_times[server] > 240:
+                        int(time.time()) - stop_times[server] > 300:
                     log.debug("dcing from sid {} after 300s".format(server.id))
                     self._clear_queue(server)
                     await self._stop_and_disconnect(server)
