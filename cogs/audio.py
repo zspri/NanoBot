@@ -274,13 +274,19 @@ class Downloader(threading.Thread):
             video = self._yt.extract_info(self.url, download=False,
                                           process=False)
         else:
-            self.url = self.url[9:]
-            yt_id = self._yt.extract_info(
-                self.url, download=False)["entries"][0]["id"]
-            self.url = "https://youtube.com/watch?v={}".format(yt_id)
-            video = self._yt.extract_info(self.url, download=False,
+            try:
+                self.url = self.url[9:]
+                yt_id = self._yt.extract_info(
+                    self.url, download=False)["entries"][0]["id"]
+                self.url = "https://youtube.com/watch?v={}".format(yt_id)
+                video = self._yt.extract_info(self.url, download=False,
                                           process=False)
-
+            except AttributeError as e:
+                server = ctx.message.server
+                vc = self.voice_client(server)
+                log.warning("An attribute error occurred downloading URL '{}'\n'{}'".format(self.url, str(e)))
+                vc.audio_player.stop()
+                return
         if(video is not None):
             self.song = Song(**video)
 
