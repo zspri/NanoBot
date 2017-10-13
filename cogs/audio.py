@@ -248,6 +248,8 @@ class Downloader(threading.Thread):
             self.hit_max_length.set()
         except OSError as e:
             log.warning("An operating system error occurred while downloading URL '{}':\n'{}'".format(self.url, str(e)))
+        except KeyError as e:
+            log.warning("A key error occurred while downloading URL '{}':\n'{}'".format(self.url, str(e)))
         self.done.set()
 
     def download(self):
