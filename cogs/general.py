@@ -62,7 +62,7 @@ class Fun:
         except:
             raise
 
-     @commands.command(pass_context=True, no_pm=True, aliases=['server', 'guildinfo', 'serverinfo'])
+    @commands.command(pass_context=True, no_pm=True, aliases=['server', 'guildinfo', 'serverinfo'])
     async def guild(self, ctx):
         """Shows guild info."""
         await self.bot.send_typing(ctx.message.channel)
@@ -89,55 +89,43 @@ class Fun:
         embed.add_field(name="Created At", value=server.created_at)
         await self.bot.send_message(ctx.message.channel, embed=embed)
 
-     @commands.command(pass_context=True, no_pm=True, aliases=['userinfo', 'member', 'memberinfo', 'profile'])
-    async def user(self, ctx, *, user : discord.User = None): # !!user
-        """Gets the specified user's info."""
-        await self.bot.send_typing(ctx.message.channel)
-        badge = ""
-        if user is None or user == None:
-            user = ctx.message.author
-        r = requests.get("https://discordbots.org/api/bots/294210459144290305/votes", headers={"Authorization":os.getenv("DBOTSLIST_TOKEN")})
-        if r.status_code == 200:
-            r = r.json()
-            for u in r:
-                if u['id'] == user.id:
-                    badge += self.badges['voter'] + " "
-        else:
-            logging.error("Failed to get voting info!")
-            await self.bot.say(":no_entry_sign: Failed to get voter info. If you voted, your badge will not show up temporarily.")
-        if user.id in staff:
-            badge += self.badges['staff'] + " "
-        if user.id in self.partners:
-            badge += self.badges['partner'] + " "
-        member = self.bot.get_server("294215057129340938").get_member(user.id)
-        if member is not None:
-            for role in member.roles:
-                if role.name.lower() == "retired":
-                    badge += self.badges['retired'] + " "
-        if badge == "":
-            badge = "None"
-        stp2 = ""
-        for role in user.roles:
-            if not role == ctx.message.server.default_role:
-                if role.name == user.roles[len(user.roles) - 1].name:
-                   stp2 = stp2 + role.name
-                else:
-                    stp2 = stp2 + role.name + ", "
-        if stp2 == "": stp2 = "None"
-        embed = discord.Embed(color=user.color)
-        embed.add_field(name="Username", value=str(user)[:1000])
-        embed.add_field(name="Nickname", value=str(user.nick)[:1000])
-        embed.add_field(name="Badges", value=str(badge))
-        try:
-            embed.add_field(name="Playing", value=user.game.name[:1000])
-        except:
-            embed.add_field(name="Playing", value="(Nothing)")
-        embed.add_field(name="Account Created", value=user.created_at)
-        embed.add_field(name="Joined Guild", value=user.joined_at)
-        embed.add_field(name="Roles", value=stp2[:1000])
-        embed.add_field(name="Color", value=str(ctx.message.author.color))
-        embed.set_thumbnail(url=user.avatar_url)
-        await self.bot.send_message(ctx.message.channel, embed=embed)
+    @commands.command(pass_context=True, no_pm=True, aliases=['userinfo', 'member', 'memberinfo', 'profile'])
+    async def user(self, ctx, *, user : discord.User = ctx.message.author)
+         """Gets a user's information"""
+         await self.bot.send_typing(ctx.message.channel)
+         # Get user badges
+         badge = []
+         r = requests.get("https://discordbots.org/api/bots/294210459144290305/votes?onlyids=1", headers={"Authorization":self.settings.discordbotsorg_token})
+         if r.status_code = 200:
+             r = r.json()
+             if user.id in r:
+                 badge.append(self.badges["voter"])
+         else:
+             logging.error("Failed to get voting data / Error {}".format(r.status_code))
+             await self.bot.say("I couldn't get voting info. (Error {})".format(r.status_code))
+         if user.id == self.settings.dev or user.id == self.settings.owner:
+             badge.append(self.badges["staff"])
+         if user.id in self.partners:
+             badge.append(self.badges["partner"])
+         # Get user roles
+         roles = []
+         for r in user.roles:
+             roles.append(r.name)
+         usr_roles = ", ".join(roles)
+         bgs = " ".join(badge)
+         e = discord.Embed(color=user.color, title="User Info")
+         e.set_author(name=user.name, icon_url=user.avatar_url)
+         e.add_field(name="User", value=str(user) + bgs)
+         try:
+             e.add_field(name="Playing", value=user.game.name[:1000])
+         except:
+             e.add_field(name="Playing", value="(Nothing)")
+         e.add_field(name="Account Created", value=user.created_at)
+         e.add_field(name="Joined Guild", value=user.joined_at)
+         e.add_field(name="Roles", value=usr_roles)
+         e.add_field(name="Color", value=str(ctx.message.author.color))
+         e.set_thumbnail(url=user.avatar_url)
+         await self.bot.send_message(ctx.message.channel, embed=e)
 
     @commands.command(pass_context=True)
     async def dog(self, ctx): # !!dog
