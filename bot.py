@@ -41,10 +41,25 @@ class Bot(commands.Bot):
 		self.uptime = datetime.datetime.utcnow()
 		self.logger = logger_config(self)
 		self.embeds = Embeds()
+		self.partners = []
+		self.partnered_guilds = []
+		self.badges = {
+		'partner':'<:partner:356053840799203330>',
+		'staff':'<:staff:356053841013112833>',
+		'dev':'<:dev:356053840975364097>',
+		'voter':'<:voter:356053840996466699>',
+		'retired':'<:retired:343110154834935809>',
+		'bronze':'<:ow_bronze:338113846432628736>',
+		'silver':'<:ow_silver:338113846734618624>',
+		'gold':'<:ow_gold:338113846533292042>',
+		'platinum':'<:ow_platinum:338113846550200331>',
+		'diamond':'<:ow_diamond:338113846172450818>',
+		'master':'<:ow_master:338113846377971719>',
+		'grandmaster':'<:ow_grandmaster:338113846503931905>'}
 		super().__init__(*args, command_prefix=prefix_mgr, **kwargs)
 
 def initialize(bot_class=Bot):
-	bot = bot_class(description="A music, fun, moderation, and Overwatch bot for Discord.")
+	bot = bot_class(description="A bot to help fill your server with music, Overwatch, and more!")
 
 	import __main__
 	__main__.settings = bot.settings
