@@ -4,6 +4,7 @@ import logging
 import asyncio
 import requests
 import time
+import sys
 from .utils import checks
 from .utils.embed import Embeds
 
@@ -81,7 +82,74 @@ class Moderation:
 
             log.info("{}({}) deleted {} messages in channel {}".format(author.name, author.id, number, channel.name))
             await self.process_deletion(to_delete)
-        
+
+    @commands.command(pass_context=True, no_pm=True, aliases=['server', 'guildinfo', 'serverinfo'])
+    async def guild(self, ctx):
+        """Shows guild info."""
+        await self.bot.send_typing(ctx.message.channel)
+        server = ctx.message.server
+        badge = "​"
+        if server.id in self.bot.partnered_guilds:
+            badge += self.self.badges['partner']
+        roles = []
+        for r in server.roles:
+            roles.append(r.name)
+        stp2 = ", ".join(roles)
+        embed = discord.Embed(color=ctx.message.server.me.color, title="Guild Info")
+        embed.set_author(name=server.name, icon_url=server.icon_url)
+        embed.set_footer(text="NanoBot#2520")
+        embed.set_thumbnail(url=server.icon_url)
+        embed.add_field(name="Name", value=server.name + " {}".format(badge))
+        embed.add_field(name="ID", value=str(server.id))
+        embed.add_field(name="Roles", value=stp2)
+        embed.add_field(name="Owner", value=str(server.owner))
+        embed.add_field(name="Members", value=server.member_count)
+        embed.add_field(name="Channels", value=len(server.channels))
+        embed.add_field(name="Region", value=server.region)
+        embed.add_field(name="Custom Emoji", value=len(server.emojis))
+        embed.add_field(name="Created At", value=server.created_at)
+        await self.bot.send_message(ctx.message.channel, embed=embed)
+
+    @commands.command(pass_context=True, no_pm=True, aliases=['userinfo', 'member', 'memberinfo', 'profile'])
+    async def user(self, ctx, *, user : discord.User = None):
+        """Gets a user's information"""
+        await self.bot.send_typing(ctx.message.channel)
+        # Get user badges
+        badge = []
+        if user is None or user == None:
+            user = ctx.message.author
+        r = requests.get("https://discordbots.org/api/bots/294210459144290305/votes?onlyids=1", headers={"Authorization":self.bot.settings.discordbotsorg_token})
+        if r.status_code == 200:
+            r = r.json()
+            if user.id in r:
+                badge.append(self.badges["voter"])
+        else:
+            logging.error("Failed to get voting data / Error {}".format(r.status_code))
+            await self.bot.say("I couldn't get voting info. (Error {})".format(r.status_code))
+        if user.id == self.bot.settings.dev or user.id == self.bot.settings.owner:
+            badge.append(self.bot.badges["staff"])
+        if user.id in self.bot.partners:
+            badge.append(self.bot.badges["partner"])
+        # Get user roles
+        roles = []
+        for r in user.roles:
+            roles.append(r.name)
+        usr_roles = ", ".join(roles)
+        bgs = " ".join(badge)
+        e = discord.Embed(color=user.color, title="User Info")
+        e.set_author(name=user.name, icon_url=user.avatar_url)
+        e.add_field(name="User", value=str(user) + bgs)
+        try:
+            e.add_field(name="Playing", value=user.game.name[:1000])
+        except:
+            e.add_field(name="Playing", value="(Nothing)")
+        e.add_field(name="Account Created", value=user.created_at)
+        e.add_field(name="Joined Guild", value=user.joined_at)
+        e.add_field(name="Roles", value=usr_roles)
+        e.add_field(name="Color", value=str(ctx.message.author.color))
+        e.set_thumbnail(url=user.avatar_url)
+        await self.bot.send_message(ctx.message.channel, embed=e)
+
 def setup(bot):
     n = Moderation(bot)
     bot.add_cog(n)

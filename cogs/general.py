@@ -2,8 +2,6 @@ from discord.ext import commands
 import discord
 import urllib
 import random
-import sys
-import time
 import logging
 
 log = logging.getLogger("bot.general")
