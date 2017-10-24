@@ -96,7 +96,7 @@ class Fun:
          # Get user badges
          badge = []
          r = requests.get("https://discordbots.org/api/bots/294210459144290305/votes?onlyids=1", headers={"Authorization":self.settings.discordbotsorg_token})
-         if r.status_code = 200:
+         if r.status_code == 200:
              r = r.json()
              if user.id in r:
                  badge.append(self.badges["voter"])
