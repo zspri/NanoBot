@@ -90,7 +90,7 @@ class Fun:
         await self.bot.send_message(ctx.message.channel, embed=embed)
 
     @commands.command(pass_context=True, no_pm=True, aliases=['userinfo', 'member', 'memberinfo', 'profile'])
-    async def user(self, ctx, *, user : discord.User = ctx.message.author)
+    async def user(self, ctx, *, user : discord.User = ctx.message.author):
          """Gets a user's information"""
          await self.bot.send_typing(ctx.message.channel)
          # Get user badges
