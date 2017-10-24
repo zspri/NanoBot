@@ -90,7 +90,7 @@ class Moderation:
         server = ctx.message.server
         badge = "​"
         if server.id in self.bot.partnered_guilds:
-            badge += self.self.badges['partner']
+            badge += self.bot.badges['partner']
         roles = []
         for r in server.roles:
             roles.append(r.name)
@@ -122,7 +122,7 @@ class Moderation:
         if r.status_code == 200:
             r = r.json()
             if user.id in r:
-                badge.append(self.badges["voter"])
+                badge.append(self.bot.badges["voter"])
         else:
             logging.error("Failed to get voting data / Error {}".format(r.status_code))
             await self.bot.say("I couldn't get voting info. (Error {})".format(r.status_code))
