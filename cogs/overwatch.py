@@ -56,12 +56,12 @@ class Overwatch:
             c = r.json()["us"]["stats"]["competitive"]["overall_stats"]
             q = r.json()["us"]["stats"]["quickplay"]["overall_stats"]
         except KeyError:
-            await self.bot.say(":no_entry_sign: Couldn't find any stats in the NA region or the profile does not exist.")
+            await self.bot.say(":no_entry_sign: Couldn't find any stats in the US region or the profile does not exist.")
             return
         if r.status_code == 200:
             e = discord.Embed(color=0xFC9A23, title="{}'s Overwatch Profile".format(user))
             e.add_field(name="Level", value=c['level'])
-            e.add_field(name="Competitive Rank", value="{} {}".format(badges[c['tier']], c['comprank']))
+            e.add_field(name="Competitive Rank", value="{} {}".format(self.bot.badges[c['tier']], c['comprank']))
             e.add_field(name="Games Played", value="**â€¢ Competitive:** {}\n**â€¢ Quick Play:** {}".format(c['games'], q['games']))
             e.add_field(name="Wins/Losses", value="**> Competitive**\n{} Wins / {} Losses ({}%)\n**> Quick Play**\n{} Wins / {} Losses ({}%)".format(c['wins'], c['losses'], c['win_rate'], q['wins'], q['losses'], q['win_rate']))
             e.set_thumbnail(url=q['avatar'])
