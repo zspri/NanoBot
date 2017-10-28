@@ -54,12 +54,12 @@ class Moderation:
             embed.add_field(name="> Commands", value="**• Total Received:** {}\n**• Errors:** {} ({}%)".format(len(self.bot.cmds_this_session), len(self.bot.errors), round(len(self.bot.errors)/len(self.bot.cmds_this_session) * 100)))
             embed.add_field(name="> Voice", value="**• Active Sessions:** {}\n**• Songs Played:** Unknown".format(len(self.bot.voice_clients)))
             embed.add_field(name="> Version", value="**• NanoBot:** 2.0\n**• discord.py:** {}\n**• Python:** {}".format(discord.__version__, pyver))
-            embed.add_field(name="> Misc", value="**• Website:** [Go!](https://nanobot-discord.github.io)\n**• Discord:** [Join!](https://discord.gg/eDRnXd6)")
+            embed.add_field(name="> Misc", value="**• Website:** [Go!](https://nanobot-discord.github.io)\n**• Discord:** [Join!](https://discord.gg/eDRnXd6)\n**• Status:** [status.kalico.io](http://status.kalico.io)")
             log.info("Created Embed")
             await self.bot.say(embed=embed)
         except:
-            raise       
-            
+            raise
+
     @commands.command(pass_context=True, no_pm=True, aliases=['purge', 'clear'])
     @checks.mod_or_permissions(manage_messages=True)
     async def prune(self, ctx, number: int):

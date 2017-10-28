@@ -17,4 +17,6 @@ View NanoBot on discordbots.org: https://discordbots.org/bot/nanobot
 
 > **NOTICE:** The documentation is very outdated and is not guaranteed to be accurate.
 
+Status page powered by [Cachet](https://cachethq.io): http://status.kalico.io
+
 Join the official NanoBot Discord server: https://discord.gg/eDRnXd6C
