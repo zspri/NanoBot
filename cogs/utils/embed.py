@@ -26,11 +26,9 @@ class Embeds:
         e.set_footer(text="Permissions reference: http://nanomotion.xyz/NanoBot/permissions.html")
         return e
     def server_join(self, server):
-        e = discord.Embed(color=discord.Color.green())
-        if server.icon_url == "":
-            e.set_author(name="Joined Guild")
-        else:
-            e.set_author(name="Joined Guild", icon_url=server.icon_url)
+        e = discord.Embed(color=discord.Color.green(), title="Joined Guild")
+        if not server.icon_url == "":
+            e.set_thumbnail(url=server.icon_url)
         e.add_field(name="Name", value=server.name)
         e.add_field(name="ID", value=server.id)
         usrs = 0
@@ -42,16 +40,14 @@ class Embeds:
                 usrs += 1
         e.add_field(name="Users", value="{} members / {} bots".format(usrs, bots))
         e.add_field(name="Owner", value=server.owner)
+        e.add_field(name="Total Guilds", value=len(self.bot.servers))
         return e
     def server_leave(self, server):
-        e = discord.Embed(color=discord.Color.red())
-        if server.icon_url == "":
-            e.set_author(name="Left Guild")
-        else:
-            e.set_author(name="Left Guild", icon_url=server.icon_url)
+        e = discord.Embed(color=discord.Color.red(), title="Left Guild")
+        if not server.icon_url == "":
+            e.set_thumbnail(url=server.icon_url)
         e.add_field(name="Name", value=server.name)
         e.add_field(name="ID", value=server.id)
-        e.add_field(name="Joined", value=server.me.joined_at)
         usrs = 0
         bots = 0
         for usr in server.members:
@@ -61,6 +57,7 @@ class Embeds:
                 usrs += 1
         e.add_field(name="Users", value="{} members / {} bots".format(usrs, bots))
         e.add_field(name="Owner", value=server.owner)
+        e.add_field(name="Total Guilds", value=len(self.bot.servers))
         return e
     def user_kick(self, author, user, reason, case):
         e = discord.Embed(color=discord.Color.gold(), title="Kick | Case {}".format(case))
