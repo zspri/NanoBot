@@ -59,7 +59,7 @@ class MaximumLength(Exception):
 
     def __str__(self):
         return self.message
-    
+
 
 class YouTubeDlError(Exception):
     def __init__(self, m):
@@ -67,7 +67,7 @@ class YouTubeDlError(Exception):
 
     def __str__(self):
         return self.message
-    
+
 
 class NotConnected(Exception):
     pass
@@ -247,9 +247,9 @@ class Downloader(threading.Thread):
         except MaximumLength:
             self.hit_max_length.set()
         except OSError as e:
-            log.warning("An operating system error occurred while downloading URL '{}':\n'{}'".format(self.url, str(e)))
+            log.warning("An OSError occurred while downloading URL '{}':\n'{}'".format(self.url, str(e)))
         except KeyError as e:
-            log.warning("A key error occurred while downloading URL '{}':\n'{}'".format(self.url, str(e)))
+            log.warning("A KeyError occurred while downloading URL '{}':\n'{}'".format(self.url, str(e)))
         self.done.set()
 
     def download(self):
@@ -284,7 +284,7 @@ class Downloader(threading.Thread):
             except AttributeError as e:
                 server = ctx.message.server
                 vc = self.voice_client(server)
-                log.warning("An attribute error occurred downloading URL '{}'\n'{}'".format(self.url, str(e)))
+                log.warning("An AttributeError occurred downloading URL '{}'\n'{}'".format(self.url, str(e)))
                 vc.audio_player.stop()
                 return
         if(video is not None):
@@ -297,7 +297,7 @@ class Audio:
     def __init__(self, bot, player):
         self.bot = bot
         self.queue = {}
-        self.downloaders = {} 
+        self.downloaders = {}
         self.settings = dataIO.load_json("data/audio/settings.json")
         self.server_specific_setting_keys = ["VOLUME", "VOTE_ENABLED",
                                              "VOTE_THRESHOLD", "NOPPL_DISCONNECT"]
@@ -405,7 +405,7 @@ class Audio:
                                         " REKT.")
             log.debug("valid reconnect channel for sid"
                       " {}, reconnecting...".format(server.id))
-            await self._join_voice_channel(to_connect) 
+            await self._join_voice_channel(to_connect)
         elif voice_client.channel.id != voice_channel_id:
             self.queue[server.id][QueueKey.VOICE_CHANNEL_ID] = voice_client.channel.id
             log.debug("reconnect chan id for sid {} is wrong, fixing".format(
@@ -475,14 +475,14 @@ class Audio:
 
         while any([d.is_alive() for d in downloaders]):
             await asyncio.sleep(0.1)
-            
+
         songs = [d.song for d in downloaders if d.song is not None and d.error is None]
-           
+
         invalid_downloads = [d for d in downloaders if d.error is not None]
         invalid_number = len(invalid_downloads)
         if(invalid_number > 0):
-            await self.bot.send_message(channel, "The queue contains {} item(s)"
-                                            " that can not be played.".format(invalid_number))
+            await self.bot.send_message(channel, "{} item(s) in the current queue"
+                                            " can't be played.".format(invalid_number))
 
         return songs
 
@@ -497,7 +497,7 @@ class Audio:
 
         while next_dl.is_alive():
             await asyncio.sleep(0.5)
-            
+
         error = next_dl.error
         if(error is not None):
             raise YouTubeDlError(error)
@@ -570,7 +570,7 @@ class Audio:
             return None
 
         return self.queue[server.id][QueueKey.NOW_PLAYING]
-		
+
     def _get_queue_nowplaying_channel(self, server):
         if server.id not in self.queue:
             return None
@@ -655,7 +655,7 @@ class Audio:
         connect_time = self.connect_timers.get(server.id, 0)
         if time.time() < connect_time:
             diff = int(connect_time - time.time())
-            raise ConnectTimeout("You are on connect cooldown for another {}"
+            raise ConnectTimeout("You're on connect cooldown. Try again in {}"
                                  " seconds.".format(diff))
         if server.id in self.queue:
             self.queue[server.id][QueueKey.VOICE_CHANNEL_ID] = channel.id
@@ -666,7 +666,7 @@ class Audio:
             log.exception(e)
             self.connect_timers[server.id] = time.time() + 300
             raise ConnectTimeout("We timed out connecting to a voice channel,"
-                                 " please try again in 10 minutes.")
+                                 " please try again in a few minutes.")
 
     def _list_local_playlists(self):
         ret = []
@@ -768,8 +768,8 @@ class Audio:
             return await self._parse_sc_playlist(url)
         elif self._match_yt_playlist(url):
             return await self._parse_yt_playlist(url)
-        raise InvalidPlaylist("The given URL is neither a Soundcloud or"
-                              " YouTube playlist.")
+        raise InvalidPlaylist("Please enter a valid Soundcloud or"
+                              " YouTube playlist URL.")
 
     async def _parse_sc_playlist(self, url):
         playlist = []
@@ -833,14 +833,14 @@ class Audio:
             try:
                 song = await self._guarantee_downloaded(server, url)
             except YouTubeDlError as e:
-                message = ("I'm unable to play '{}' because of an error:\n"
+                message = ("An error occurred while trying to play '{}':\n"
                           "'{}'".format(clean_url, str(e)))
                 message = escape(message, mass_mentions=True)
                 await self.bot.send_message(channel, message)
                 return
             except MaximumLength:
-                message = ("I'm unable to play '{}' because it exceeds the "
-                          "maximum audio length.".format(clean_url))
+                message = ("'{}' can't be played because "
+                          "it exceeds the max length limit.".format(clean_url))
                 message = escape(message, mass_mentions=True)
                 await self.bot.send_message(channel, message)
                 return
@@ -869,7 +869,7 @@ class Audio:
         except AttributeError:
             songlist = playlist
             name = True
-            
+
         songlist = self._songlist_change_url_to_queued_song(songlist, channel)
 
         log.debug("setting up playlist {} on sid {}".format(name, server.id))
@@ -894,13 +894,13 @@ class Audio:
 
         ret_playlist = Playlist(server=server, name=name, playlist=ret)
         self._play_playlist(server, ret_playlist, channel)
-        
+
     def _songlist_change_url_to_queued_song(self, songlist, channel):
         queued_songlist = []
         for song in songlist:
             queued_song = QueuedSong(song, channel)
             queued_songlist.append(queued_song)
-            
+
         return queued_songlist
 
     def _player_count(self):
@@ -1076,11 +1076,11 @@ class Audio:
         if yt or sc:
             return True
         return False
-    
+
     def _clean_url(self, url):
         if(self._valid_playable_url(url)):
             return "<{}>".format(url)
-        
+
         return url.replace("[SEARCH:]", "")
 
     @commands.group(pass_context=True, hidden=True)
@@ -1284,7 +1284,7 @@ class Audio:
         """Pauses the current song, `[p]resume` to continue."""
         server = ctx.message.server
         if not self.voice_connected(server):
-            await self.bot.say("Not voice connected in this server.")
+            await self.bot.say("Not currently in a voice channel.")
             return
 
         voice_client = self.voice_client(server)
@@ -1293,7 +1293,7 @@ class Audio:
             await self.bot.say("Nothing playing, nothing to pause.")
         elif voice_client.audio_player.is_playing():
             voice_client.audio_player.pause()
-            await self.bot.say("Paused.")
+            await self.bot.say("Paused the current track.")
         else:
             await self.bot.say("Nothing playing, nothing to pause.")
 
@@ -1337,14 +1337,14 @@ class Audio:
 
 
         if self.currently_downloading(server):
-            await self.bot.say("I'm already downloading a file!")
+            await self.bot.say("Already downloading a file.")
             return
 
         url = url.strip("<>")
 
         if self._match_any_url(url):
             if not self._valid_playable_url(url):
-                await self.bot.say("That's not a valid URL.")
+                await self.bot.say("That isn't a valid URL.")
                 return
         else:
             url = url.replace("/", "&#47")
@@ -1386,7 +1386,7 @@ class Audio:
 
             self.voice_client(server).audio_player.stop()
 
-            await self.bot.say("Going back 1 song.")
+            await self.bot.say("Going back to the previous song.")
         else:
             await self.bot.say("Not playing anything on this server.")
 
@@ -1428,17 +1428,17 @@ class Audio:
 
         if self._valid_playable_url(url):
             try:
-                await self.bot.say("Enumerating song list... This could take"
+                await self.bot.say("Checking song list... This could take"
                                    " a few moments.")
                 songlist = await self._parse_playlist(url)
             except InvalidPlaylist:
                 await self.bot.say("That playlist URL is invalid.")
                 return
             except YouTubeDlError as e:
-                await self.bot.say("An error occurred while enumerating the playlist:\n"
+                await self.bot.say("An error occurred while checking the playlist:\n"
                                    "'{}'".format(str(e)))
                 return
-				
+
             playlist = self._make_playlist(author, url, songlist)
             playlist.name = name
             playlist.server = server
@@ -1449,8 +1449,8 @@ class Audio:
         else:
             await self.bot.say("That URL is not a valid Soundcloud or YouTube"
                                " playlist link. If you think this is in error"
-                               " please let us know and we'll get it"
-                               " fixed ASAP.")
+                               " please let us know at"
+                               " https://discord.me/nanobot.")
 
     @playlist.command(pass_context=True, no_pm=True, name="append")
     async def playlist_append(self, ctx, name, url):
@@ -1496,7 +1496,7 @@ class Audio:
         server = ctx.message.server
         channel = ctx.message.channel
         if not self.voice_connected(server):
-            await self.bot.say("Not voice connected in this server.")
+            await self.bot.say("Not in a voice channel on this server.")
             return
 
         if server.id not in self.queue:
@@ -1555,7 +1555,7 @@ class Audio:
                 try:
                     self.has_connect_perm(author, server)
                 except AuthorNotConnected:
-                    await self.bot.say("You must join a voice channel before"
+                    await self.bot.say("You need to be in a voice channel before"
                                        " I can play anything.")
                     return
                 except UnauthorizedConnect:
@@ -1765,7 +1765,7 @@ class Audio:
                         reply = "I removed your vote to skip."
                     else:
                         self.skip_votes[server.id].append(msg.author.id)
-                        reply = "you voted to skip."
+                        reply = "You voted to skip."
 
                     num_votes = len(self.skip_votes[server.id])
                     num_members = sum(not (m.bot or self.can_instaskip(m))
@@ -2031,7 +2031,7 @@ class Audio:
             elif len(queue) > 0:
                 queued_next_song = queue.peekleft()
                 next_url = queued_next_song.url
-                next_channel = queued_next_song.channel	
+                next_channel = queued_next_song.channel
                 next_dl = Downloader(next_url, max_length)
             else:
                 next_dl = None
